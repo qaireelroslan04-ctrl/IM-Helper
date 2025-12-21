@@ -108,11 +108,36 @@
         }
 
         .nav-header { 
-            padding: 1.5rem; 
-            font-size: 0.75rem; text-transform: uppercase; 
-            letter-spacing: 0.1em; color: var(--text-muted); font-weight: 800;
+            padding: 1rem 1.5rem; 
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0; 
+        }
+
+        /* NEW TOGGLE BUTTONS */
+        .view-toggle {
+            display: flex;
+            background: var(--bg-input);
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+        .toggle-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .nav-scroll-area {
@@ -185,7 +210,7 @@
         .class-card.type-BST::before { background: #8b5cf6; } /* Purple */
         .class-card.type-Lecture::before { background: #3b82f6; } /* Blue */
         .class-card.type-Seminar::before { background: #f97316; } /* Orange */
-        .class-card.type-Case::before { background: #10b981; } /* Green (Case Discussion) */
+        .class-card.type-Case::before { background: #10b981; } /* Green */
         .class-card.type-Exam::before { background: #ef4444; } /* Red */
 
         .time-col { 
@@ -229,7 +254,7 @@
             .time-col { min-width: 50px; padding-right: 0.75rem; }
         }
 
-        /* --- MODALS FIXED UI (Floating Style) --- */
+        /* --- MODALS FIXED UI --- */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); 
             z-index: 2000; 
@@ -240,7 +265,6 @@
 
         .detail-sheet {
             background: var(--bg-card);
-            /* Floating Style for Mobile */
             width: calc(100% - 24px); 
             max-width: 600px;
             height: auto;
@@ -359,7 +383,12 @@
         <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
         
         <aside id="sidebar">
-            <div class="nav-header">Select Week</div>
+            <div class="nav-header">
+                <div class="view-toggle">
+                    <button id="btnViewWeek" class="toggle-btn active" onclick="switchView('week')">Weeks</button>
+                    <button id="btnViewLecturer" class="toggle-btn" onclick="switchView('lecturer')">Lecturers</button>
+                </div>
+            </div>
             <div id="weekList" class="nav-scroll-area"></div>
             <div class="sidebar-footer">
                 <button onclick="adminLogin()" id="adminBtn" class="btn" style="margin-top:0; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">
@@ -428,7 +457,8 @@
                     <select id="inpType" class="form-select">
                         <option value="Lecture">Lecture</option>
                         <option value="BST">BST (Bedside Teaching)</option>
-                        <option value="Case Discussion">Case Discussion</option> <option value="Seminar">Seminar</option>
+                        <option value="Case Discussion">Case Discussion</option> 
+                        <option value="Seminar">Seminar</option>
                         <option value="Exam">Exam / Test</option>
                         <option value="Custom">Other</option>
                     </select>
@@ -524,32 +554,32 @@
         const scheduleRef = db.collection("schedule_group_b");
 
         // --- DATA: LECTURERS & CONTACTS ---
-        // FILL IN PHONE NUMBERS HERE inside the quotes e.g., "60123456789"
-        // Ensure keys match the lecturers list exactly.
         const lecturerContacts = {
-            "Dr Affizal Samsudin": "60176631789",
-            "Dr Asri B Said": "60138021143",
-            "Dr Chai Chee Shee": "60198188265",
-            "Dr Chan En Ze": "60105054955",
-            "Dr Chow Han Bing": "60192712889",
-            "Dr Diana Ng": "60198198265",
-            "Dr Frederick De Rozario": "60168678252",
-            "Dr Henry Gudum": "60198895047",
-            "Dr Joshua Chung": "60168963966",
-            "Dr Kuan Jew Win": "60198593011",
-            "Dr Ling Hwei Sung": "60128939596",
-            "Dr Loh Huai Heng": "60122010765",
-            "Dr Sim Chun Yang": "60138273338",
-            "Dr Sim Sing Yee": "60138338862",
-            "Dr Yeoh Cheng Wooi": "60182628290"
+            "Dr Affizal Samsudin": "",
+            "Dr Asri B Said": "",
+            "Dr Chai Chee Shee": "",
+            "Dr Chan En Ze": "",
+            "Dr Chow Han Bing": "",
+            "Dr Diana Ng": "",
+            "Dr Frederick De Rozario": "",
+            "Dr Henry Gudum": "",
+            "Dr Joshua Chung": "",
+            "Dr Kuan Jew Win": "",
+            "Dr Ling Hwei Sung": "",
+            "Dr Loh Huai Heng": "",
+            "Dr Sim Chun Yang": "",
+            "Dr Sim Sing Yee": "",
+            "Dr Yeoh Cheng Wooi": ""
         };
 
-        // Extract names for dropdown (Sorted Alphabetically)
+        // Standard sorted keys for Admin dropdown
         const lecturers = Object.keys(lecturerContacts).sort();
         lecturers.push("Other");
 
         let allEvents = [];
         let currentWeek = 1;
+        let viewMode = 'week'; // 'week' or 'lecturer'
+        let currentLecturer = null;
         let isAdmin = false;
 
         // --- HELPER: Close Sidebar if Open ---
@@ -580,6 +610,25 @@
             document.getElementById('backdrop').classList.toggle('open');
         }
 
+        // --- VIEW SWITCHING ---
+        function switchView(mode) {
+            viewMode = mode;
+            document.getElementById('btnViewWeek').classList.toggle('active', mode === 'week');
+            document.getElementById('btnViewLecturer').classList.toggle('active', mode === 'lecturer');
+            
+            // If switching to lecturer mode and no lecturer selected, pick first one or just render list
+            if (mode === 'lecturer' && !currentLecturer) {
+                 // We wait for user to pick from sidebar
+            }
+            renderSidebarNav();
+            // If in lecturer mode, only render schedule if we have a selection, else maybe clear or show instructions
+            // For simplicity, if we switch, we stay on current view until clicked
+            // But usually we want to see the list.
+            if(mode === 'week') renderSchedule(); 
+            else if(currentLecturer) renderSchedule(); // Keep showing current lecturer if exists
+            else document.getElementById('scheduleContainer').innerHTML = '<div style="text-align:center; padding: 4rem; color: var(--text-muted);">Select a Lecturer from the menu.</div>';
+        }
+
         // --- DATA LOGIC ---
         function calculateCurrentWeek() {
             const startDate = new Date('2025-12-22T00:00:00');
@@ -594,27 +643,46 @@
         scheduleRef.orderBy("date").orderBy("time").onSnapshot(snapshot => {
             allEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderSidebarNav();
-            renderSchedule();
+            if(viewMode === 'week') renderSchedule();
+            else if(currentLecturer) renderSchedule();
         });
 
         // --- RENDER SIDEBAR ---
         function renderSidebarNav() {
             const list = document.getElementById('weekList');
             list.innerHTML = '';
-            const start = new Date('2025-12-22');
-            for(let i=1; i<=8; i++) {
-                const wStart = new Date(start);
-                wStart.setDate(start.getDate() + (i-1)*7);
-                const wEnd = new Date(wStart);
-                wEnd.setDate(wStart.getDate() + 6);
-                const format = d => `${d.getDate()}/${d.getMonth()+1}`;
-                const div = document.createElement('div');
-                div.className = `nav-item ${i === currentWeek ? 'active' : ''}`;
-                div.onclick = () => { currentWeek = i; renderSidebarNav(); renderSchedule(); toggleSidebar(); };
-                div.innerHTML = `<div><div class="nav-title">Week ${i}</div><div class="nav-sub">${format(wStart)} - ${format(wEnd)}</div></div>${i === currentWeek ? '<div>•</div>' : ''}`;
-                list.appendChild(div);
+            
+            if (viewMode === 'week') {
+                const start = new Date('2025-12-22');
+                for(let i=1; i<=8; i++) {
+                    const wStart = new Date(start);
+                    wStart.setDate(start.getDate() + (i-1)*7);
+                    const wEnd = new Date(wStart);
+                    wEnd.setDate(wStart.getDate() + 6);
+                    const format = d => `${d.getDate()}/${d.getMonth()+1}`;
+                    const div = document.createElement('div');
+                    div.className = `nav-item ${i === currentWeek ? 'active' : ''}`;
+                    div.onclick = () => { currentWeek = i; renderSidebarNav(); renderSchedule(); toggleSidebar(); };
+                    div.innerHTML = `<div><div class="nav-title">Week ${i}</div><div class="nav-sub">${format(wStart)} - ${format(wEnd)}</div></div>${i === currentWeek ? '<div>•</div>' : ''}`;
+                    list.appendChild(div);
+                }
+                document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
+            } else {
+                // LECTURER VIEW
+                // 1. Collect all unique names from DB + Hardcoded list
+                const allNames = new Set(Object.keys(lecturerContacts));
+                allEvents.forEach(e => { if(e.lecturer) allNames.add(e.lecturer); });
+                const sortedNames = Array.from(allNames).sort();
+
+                sortedNames.forEach(name => {
+                    const div = document.createElement('div');
+                    div.className = `nav-item ${name === currentLecturer ? 'active' : ''}`;
+                    div.onclick = () => { currentLecturer = name; renderSidebarNav(); renderSchedule(); toggleSidebar(); };
+                    div.innerHTML = `<div><div class="nav-title">${name}</div></div>`;
+                    list.appendChild(div);
+                });
+                document.getElementById('currentWeekBadge').innerText = "Lecturer";
             }
-            document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
         }
 
         // --- SORTING HELPER ---
@@ -635,23 +703,36 @@
             const container = document.getElementById('scheduleContainer');
             container.innerHTML = '';
             
-            let weekEvents = allEvents.filter(e => e.week == currentWeek);
+            let filteredEvents = [];
+
+            if (viewMode === 'week') {
+                filteredEvents = allEvents.filter(e => e.week == currentWeek);
+                document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
+            } else {
+                if(!currentLecturer) return;
+                filteredEvents = allEvents.filter(e => e.lecturer === currentLecturer);
+                document.getElementById('mainHeaderTitle').innerText = currentLecturer;
+            }
             
-            weekEvents.sort((a, b) => {
+            // Sort by Date then Time
+            filteredEvents.sort((a, b) => {
                 if (a.date !== b.date) return a.date.localeCompare(b.date);
                 return getMinutes(a.time) - getMinutes(b.time);
             });
 
             const todayStr = new Date().toISOString().split('T')[0];
 
-            if(weekEvents.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding: 4rem; color: var(--text-muted);">No classes scheduled for Week ${currentWeek}.</div>`;
-                appendNextWeekButton(container);
+            if(filteredEvents.length === 0) {
+                const msg = viewMode === 'week' 
+                    ? `No classes scheduled for Week ${currentWeek}.` 
+                    : `No classes found for ${currentLecturer}.`;
+                container.innerHTML = `<div style="text-align:center; padding: 4rem; color: var(--text-muted);">${msg}</div>`;
+                if(viewMode === 'week') appendNextWeekButton(container);
                 return;
             }
 
             const grouped = {};
-            weekEvents.forEach(e => {
+            filteredEvents.forEach(e => {
                 if(!grouped[e.date]) grouped[e.date] = [];
                 grouped[e.date].push(e);
             });
@@ -699,12 +780,14 @@
                 container.appendChild(dayBlock);
             });
             
-            appendNextWeekButton(container);
+            if(viewMode === 'week') appendNextWeekButton(container);
 
-            setTimeout(() => {
-                const el = document.getElementById('todayMarker');
-                if(el) el.scrollIntoView({behavior: "smooth", block: "center"});
-            }, 500);
+            if(viewMode === 'week') {
+                setTimeout(() => {
+                    const el = document.getElementById('todayMarker');
+                    if(el) el.scrollIntoView({behavior: "smooth", block: "center"});
+                }, 500);
+            }
         }
 
         function appendNextWeekButton(container) {
@@ -721,26 +804,6 @@
             renderSchedule();
             document.getElementById('scheduleContainer').scrollTop = 0;
         }
-
-        // --- HEADER SCROLL LOGIC ---
-        const mainTitle = document.getElementById('mainHeaderTitle');
-        const scrollContainer = document.getElementById('scheduleContainer');
-
-        scrollContainer.addEventListener('scroll', () => {
-            const groups = document.querySelectorAll('.day-group');
-            let found = false;
-            for (const group of groups) {
-                const rect = group.getBoundingClientRect();
-                if (rect.top <= 120 && rect.bottom > 60) {
-                    mainTitle.innerText = group.dataset.dayName; 
-                    found = true;
-                    break;
-                }
-            }
-            if (!found || scrollContainer.scrollTop < 50) {
-                mainTitle.innerText = "Internal Medicine";
-            }
-        });
 
         // --- DETAILS ---
         let currentDetailId = null;
@@ -760,13 +823,10 @@
             btnGroup.innerHTML = ''; 
             btnGroup.classList.add('hidden');
 
-            // 1. Check Primary Lecturer Phone
             let phone = "";
             if (lecturerContacts[ev.lecturer]) {
-                // Use hardcoded list
                 phone = lecturerContacts[ev.lecturer];
             } else if (ev.lecturerPhone) {
-                // Use custom saved phone (for "Other")
                 phone = ev.lecturerPhone;
             }
 
@@ -781,7 +841,6 @@
                 btnGroup.classList.remove('hidden');
             }
 
-            // 2. Check Extra Phone (Related Contact)
             if (ev.extraPhone) {
                 const cleanExtra = ev.extraPhone.replace(/[^0-9]/g, '');
                 btnGroup.innerHTML += `
@@ -798,27 +857,8 @@
         }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
 
-        // --- TIME HELPER FUNCTIONS ---
-        function convertTo12Hour(timeStr) {
-            if(!timeStr) return "";
-            let [h, m] = timeStr.split(':');
-            h = parseInt(h);
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            h = h % 12;
-            h = h ? h : 12; 
-            return `${h}:${m} ${ampm}`;
-        }
-
-        function convertTo24Hour(timeStr) {
-            if(!timeStr) return "";
-            const [time, modifier] = timeStr.split(' ');
-            if(!time || !modifier) return "";
-            let [hours, minutes] = time.split(':');
-            if (hours === '12') hours = '00';
-            if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
-            return `${String(hours).padStart(2, '0')}:${minutes}`;
-        }
-
+        // ... (Remaining Admin/Edit/Save functions same as before) ...
+        
         // --- ADMIN ---
         function adminLogin() {
             if(isAdmin) {
@@ -900,7 +940,6 @@
                 document.getElementById('inpExtraPhone').value = "";
                 
                 document.getElementById('btnDelete').classList.add('hidden');
-                // Reset to default select
                 sel.value = "";
                 document.getElementById('divOtherLecturer').classList.add('hidden');
                 document.getElementById('inpLecturerText').value = "";
@@ -925,7 +964,7 @@
 
             if(lect === "Other") {
                 lect = document.getElementById('inpLecturerText').value;
-                lectPhone = document.getElementById('inpLecturerPhone').value; // Save custom phone
+                lectPhone = document.getElementById('inpLecturerPhone').value; 
             }
             
             const start24 = document.getElementById('inpStartTime').value;
@@ -941,8 +980,8 @@
             const data = {
                 title: document.getElementById('inpTitle').value,
                 lecturer: lect,
-                lecturerPhone: lectPhone, // NEW FIELD
-                extraPhone: document.getElementById('inpExtraPhone').value, // NEW FIELD
+                lecturerPhone: lectPhone, 
+                extraPhone: document.getElementById('inpExtraPhone').value, 
                 date: document.getElementById('inpDate').value,
                 time: finalTime, 
                 venue: document.getElementById('inpVenue').value || "TBA",
