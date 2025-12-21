@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Internal Medicine Timetable</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -47,11 +47,11 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-body);
             color: var(--text-main);
-            height: 100dvh;
+            /* CRITICAL FIX: Use dvh to account for mobile browser bars */
+            height: 100dvh; 
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transition: background-color 0.3s;
         }
 
         /* --- HEADER --- */
@@ -60,19 +60,19 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             padding: 0 1.5rem;
-            height: 60px;
+            padding-top: env(safe-area-inset-top); /* Notch support */
+            height: calc(60px + env(safe-area-inset-top));
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-color);
             z-index: 50;
             flex-shrink: 0;
-            transition: all 0.3s ease;
         }
 
         .header-left { display: flex; align-items: center; gap: 1rem; flex: 1; overflow: hidden; }
         .menu-toggle { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; display: none; }
-        .app-title { font-size: 1.25rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; transition: opacity 0.2s;}
+        .app-title { font-size: 1.25rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; }
         .week-badge { 
             font-size: 0.75rem; background: var(--bg-input); padding: 2px 8px; 
             border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted);
@@ -89,34 +89,33 @@
         /* --- LAYOUT --- */
         .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
 
-        /* --- SLEEK SIDEBAR START --- */
+        /* --- SIDEBAR FIXES --- */
         aside {
             width: 300px; 
             background: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
             display: flex; 
-            flex-direction: column; /* Key for fixed footer */
-            z-index: 40;
+            flex-direction: column; 
+            z-index: 999; /* High Z-index */
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            height: 100%;
         }
 
+        /* Header in Sidebar */
         .nav-header { 
-            padding: 1.5rem; font-size: 0.75rem; text-transform: uppercase; 
+            padding: 1.5rem; 
+            font-size: 0.75rem; text-transform: uppercase; 
             letter-spacing: 0.1em; color: var(--text-muted); font-weight: 800;
             border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0; /* Don't shrink */
+            flex-shrink: 0; 
         }
 
-        /* Scrollable List Area */
+        /* Scrollable List Area - Flex 1 takes all available space */
         .nav-scroll-area {
-            flex: 1; /* Takes remaining space */
-            overflow-y: auto; /* Internal scroll */
-            padding-bottom: 1rem;
+            flex: 1; 
+            overflow-y: auto; 
+            overscroll-behavior: contain;
         }
-        /* Hide scrollbar for sleekness */
-        .nav-scroll-area::-webkit-scrollbar { width: 4px; }
-        .nav-scroll-area::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .nav-scroll-area::-webkit-scrollbar { width: 0px; background: transparent; } /* Hidden Scrollbar */
 
         .nav-item {
             padding: 1rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color);
@@ -127,20 +126,22 @@
         .nav-item .nav-title { font-weight: 600; font-size: 0.95rem; }
         .nav-item .nav-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
-        /* Fixed Footer for Admin */
+        /* Fixed Footer for Admin - Pinned to bottom */
         .sidebar-footer {
             flex-shrink: 0;
             padding: 1.5rem;
+            /* iPhone Safe Area padding */
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); 
             border-top: 1px solid var(--border-color);
             background: var(--bg-sidebar);
-            backdrop-filter: blur(10px); /* Sleek blur */
         }
-        /* --- SLEEK SIDEBAR END --- */
+        /* --- END SIDEBAR --- */
 
-        /* Main Content (Timetable) */
+        /* Main Content */
         main {
             flex: 1; overflow-y: auto; padding: 1rem;
             scroll-behavior: smooth; position: relative;
+            padding-bottom: 100px; /* Extra space for FAB */
         }
 
         /* Day Group */
@@ -204,19 +205,28 @@
         /* Next Week Button */
         .next-week-container { padding: 2rem 0; text-align: center; }
         .btn-next-week {
-            background-color: var(--bg-input);
-            color: var(--accent-color);
-            border: 1px solid var(--border-color);
-            padding: 1rem 2rem;
-            border-radius: 2rem;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
-            max-width: 300px;
+            background-color: var(--bg-input); color: var(--accent-color); border: 1px solid var(--border-color);
+            padding: 1rem 2rem; border-radius: 2rem; font-weight: 700; font-size: 1rem; cursor: pointer;
+            transition: all 0.2s; width: 100%; max-width: 300px;
         }
         .btn-next-week:hover { background-color: var(--accent-bg); border-color: var(--accent-color); }
+
+        /* --- MOBILE RESPONSIVENESS (Fixing Sidebar) --- */
+        .backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 35; }
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            aside { 
+                position: fixed; 
+                top: 0; left: 0;
+                /* Force full height of VIEWPORT, ignoring address bar issues */
+                height: 100dvh; 
+                transform: translateX(-100%); 
+                box-shadow: 10px 0 30px rgba(0,0,0,0.5); 
+            }
+            aside.open { transform: translateX(0); }
+            .backdrop.open { display: block; }
+            .time-col { min-width: 50px; padding-right: 0.75rem; }
+        }
 
         /* --- MODALS --- */
         .modal-overlay {
@@ -241,8 +251,7 @@
 
         .sheet-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: start; background: var(--bg-box); }
         .sheet-close { background: var(--bg-input); border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-
-        .sheet-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
+        .sheet-body { flex: 1; overflow-y: auto; padding: 1.5rem; padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
         
         .detail-row { margin-bottom: 1.5rem; }
         .detail-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-color); font-weight: 700; margin-bottom: 0.5rem; }
@@ -251,22 +260,13 @@
 
         /* FAB & Form */
         .fab {
-            position: fixed; bottom: 2rem; right: 2rem; width: 56px; height: 56px;
+            position: fixed; bottom: calc(2rem + env(safe-area-inset-bottom)); right: 2rem; width: 56px; height: 56px;
             background: var(--accent-color); color: white; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 90;
             font-size: 1.5rem; transition: transform 0.2s;
         }
         .fab:hover { transform: scale(1.1); }
-
-        .backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 35; }
-        @media (max-width: 768px) {
-            .menu-toggle { display: block; }
-            aside { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-            aside.open { transform: translateX(0); }
-            .backdrop.open { display: block; }
-            .time-col { min-width: 50px; padding-right: 0.75rem; }
-        }
 
         .form-group { margin-bottom: 1rem; }
         .form-label { display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted); }
