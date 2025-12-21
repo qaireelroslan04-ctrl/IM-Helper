@@ -395,17 +395,17 @@
                 <div class="form-group time-row">
                     <div class="time-block">
                         <label class="form-label">Start Time</label>
-                        <input type="time" id="inpStartTime" class="form-input" required>
+                        <input type="time" id="inpStartTime" class="form-input">
                     </div>
                     <div class="time-block">
                         <label class="form-label">End Time</label>
-                        <input type="time" id="inpEndTime" class="form-input" required>
+                        <input type="time" id="inpEndTime" class="form-input">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Venue</label>
-                    <input type="text" id="inpVenue" class="form-input" placeholder="e.g. Ward 2A / Zoom">
+                    <input type="text" id="inpVenue" class="form-input" placeholder="Leave blank for TBA">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Notes (Optional)</label>
@@ -519,8 +519,9 @@
         // --- SORTING HELPER ---
         function getMinutes(timeStr) {
             if (!timeStr) return 9999;
+            // Handle TBA or TBC by pushing them to the end (9999 mins)
             let startPart = timeStr.split('-')[0].trim(); 
-            if(startPart.toUpperCase().includes('TBC')) return 9999;
+            if(startPart.toUpperCase().includes('TBC') || startPart.toUpperCase().includes('TBA')) return 9999;
 
             let [time, modifier] = startPart.split(' '); 
             if(!time || !modifier) return 9999;
@@ -580,12 +581,16 @@
                 
                 let cardsHTML = '';
                 grouped[date].forEach(ev => {
-                    const isTBC = ev.time.includes('TBC') || ev.venue.includes('TBC');
-                    const timeParts = ev.time ? ev.time.split(' ') : ["TBC", ""]; 
+                    // Check for TBA in both time and venue
+                    const isTBC = ev.time.includes('TBA') || ev.venue.includes('TBA') || ev.time.includes('TBC') || ev.venue.includes('TBC');
+                    
+                    // Safe split if time is "TBA"
+                    const timeParts = ev.time && ev.time !== "TBA" ? ev.time.split(' ') : ["TBA", ""]; 
+
                     cardsHTML += `
                         <div class="class-card type-${ev.type || 'Custom'}" onclick="openDetail('${ev.id}')">
                             <div class="time-col">
-                                <span class="time-start">${timeParts[0] || ev.time}</span>
+                                <span class="time-start">${timeParts[0]}</span>
                                 <span class="time-ampm">${timeParts[1] || ''}</span>
                             </div>
                             <div class="info-col">
@@ -715,17 +720,21 @@
             if(isEdit) {
                 const ev = allEvents.find(e => e.id === currentDetailId);
                 document.getElementById('editId').value = ev.id;
-                document.getElementById('inpType').value = ev.type || "Lecture"; // NEW: Load Type
+                document.getElementById('inpType').value = ev.type || "Lecture"; 
                 document.getElementById('inpTitle').value = ev.title;
                 document.getElementById('inpDate').value = ev.date;
-                if(ev.time) {
+                if(ev.time && ev.time !== "TBA") {
                     const parts = ev.time.split(' - ');
                     document.getElementById('inpStartTime').value = convertTo24Hour(parts[0]);
                     if(parts[1]) {
                         document.getElementById('inpEndTime').value = convertTo24Hour(parts[1]);
                     }
+                } else {
+                    // Reset if TBA
+                    document.getElementById('inpStartTime').value = "";
+                    document.getElementById('inpEndTime').value = "";
                 }
-                document.getElementById('inpVenue').value = ev.venue;
+                document.getElementById('inpVenue').value = ev.venue === "TBA" ? "" : ev.venue;
                 document.getElementById('inpNotes').value = ev.notes || "";
                 document.getElementById('inpWeek').value = ev.week;
                 document.getElementById('btnDelete').classList.remove('hidden');
@@ -739,12 +748,12 @@
                 }
             } else {
                 document.getElementById('editId').value = "";
-                document.getElementById('inpType').value = "Lecture"; // Default Type
+                document.getElementById('inpType').value = "Lecture"; 
                 document.getElementById('inpTitle').value = "";
                 document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
                 document.getElementById('inpStartTime').value = "09:00"; 
                 document.getElementById('inpEndTime').value = "10:00";   
-                document.getElementById('inpVenue').value = "TBC";
+                document.getElementById('inpVenue').value = "";
                 document.getElementById('inpNotes').value = "";
                 document.getElementById('inpWeek').value = currentWeek;
                 document.getElementById('btnDelete').classList.add('hidden');
@@ -768,19 +777,25 @@
             
             const start24 = document.getElementById('inpStartTime').value;
             const end24 = document.getElementById('inpEndTime').value;
-            const start12 = convertTo12Hour(start24);
-            const end12 = convertTo12Hour(end24);
-            const finalTime = `${start12} - ${end12}`;
+            let finalTime = "TBA";
+
+            // Only calculate time if both inputs have values
+            if (start24 && end24) {
+                const start12 = convertTo12Hour(start24);
+                const end12 = convertTo12Hour(end24);
+                finalTime = `${start12} - ${end12}`;
+            }
 
             const data = {
                 title: document.getElementById('inpTitle').value,
                 lecturer: lect,
                 date: document.getElementById('inpDate').value,
                 time: finalTime, 
-                venue: document.getElementById('inpVenue').value,
+                // Use input venue OR default to "TBA" if empty
+                venue: document.getElementById('inpVenue').value || "TBA",
                 notes: document.getElementById('inpNotes').value,
                 week: document.getElementById('inpWeek').value,
-                type: document.getElementById('inpType').value // NEW: Save the selected type
+                type: document.getElementById('inpType').value 
             };
             if(id) await scheduleRef.doc(id).update(data);
             else await scheduleRef.add(data);
