@@ -223,10 +223,10 @@
             .time-col { min-width: 50px; padding-right: 0.75rem; }
         }
 
-        /* --- MODALS (CRITICAL FIX: Z-Index 2000) --- */
+        /* --- MODALS --- */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); 
-            z-index: 2000; /* FIXED: Higher than Sidebar (999) */
+            z-index: 2000; 
             backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center;
             opacity: 0; transition: opacity 0.2s;
         }
@@ -277,17 +277,11 @@
         .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; margin-top: 0.5rem; }
         .hidden { display: none; }
         
-        /* New Time Row Style */
+        /* Time Row Style */
         .time-row { display: flex; gap: 10px; }
         .time-block { flex: 1; }
-        /* Style the time picker specifically */
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
-        [data-theme="light"] input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(0);
-        }
+        input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        [data-theme="light"] input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0); }
 
     </style>
 </head>
@@ -510,11 +504,39 @@
             document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
         }
 
+        // --- SORTING HELPER ---
+        // Converts "09:00 AM" to 540 (minutes) and "01:30 PM" to 810 (minutes)
+        function getMinutes(timeStr) {
+            if (!timeStr) return 9999;
+            // Handle "09:00 AM - 10:00 AM" -> take "09:00 AM"
+            let startPart = timeStr.split('-')[0].trim(); 
+            if(startPart.toUpperCase().includes('TBC')) return 9999;
+
+            let [time, modifier] = startPart.split(' '); 
+            if(!time || !modifier) return 9999;
+            
+            let [hours, minutes] = time.split(':').map(Number);
+            
+            if (modifier.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+            if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+            
+            return (hours * 60) + minutes;
+        }
+
         // --- RENDER SCHEDULE ---
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
             container.innerHTML = '';
-            const weekEvents = allEvents.filter(e => e.week == currentWeek);
+            
+            // 1. Filter by week
+            let weekEvents = allEvents.filter(e => e.week == currentWeek);
+            
+            // 2. SORT CHRONOLOGICALLY (Fixes the 1:30PM before 9:00AM issue)
+            weekEvents.sort((a, b) => {
+                if (a.date !== b.date) return a.date.localeCompare(b.date);
+                return getMinutes(a.time) - getMinutes(b.time);
+            });
+
             const todayStr = new Date().toISOString().split('T')[0];
 
             if(weekEvents.length === 0) {
@@ -529,7 +551,7 @@
                 grouped[e.date].push(e);
             });
 
-            Object.keys(grouped).sort().forEach(date => {
+            Object.keys(grouped).forEach(date => {
                 const dateObj = new Date(date);
                 const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
                 const datePretty = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
@@ -551,7 +573,6 @@
                 let cardsHTML = '';
                 grouped[date].forEach(ev => {
                     const isTBC = ev.time.includes('TBC') || ev.venue.includes('TBC');
-                    // Ensure split works even if time doesn't have a space
                     const timeParts = ev.time ? ev.time.split(' ') : ["TBC", ""]; 
                     cardsHTML += `
                         <div class="class-card type-${ev.type || 'Custom'}" onclick="openDetail('${ev.id}')">
@@ -618,7 +639,7 @@
         // --- DETAILS ---
         let currentDetailId = null;
         function openDetail(id) {
-            checkSidebar(); // NEW: Close sidebar if open
+            checkSidebar(); 
             currentDetailId = id;
             const ev = allEvents.find(e => e.id === id);
             document.getElementById('detailType').innerText = ev.type || 'SESSION';
@@ -633,7 +654,6 @@
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
 
         // --- TIME HELPER FUNCTIONS ---
-        // Converts "14:00" to "2:00 PM"
         function convertTo12Hour(timeStr) {
             if(!timeStr) return "";
             let [h, m] = timeStr.split(':');
@@ -644,18 +664,13 @@
             return `${h}:${m} ${ampm}`;
         }
 
-        // Converts "2:00 PM" or "02:00 PM" back to "14:00" for the input
         function convertTo24Hour(timeStr) {
             if(!timeStr) return "";
-            // Handle simple "9:00 AM" format
             const [time, modifier] = timeStr.split(' ');
             if(!time || !modifier) return "";
-            
             let [hours, minutes] = time.split(':');
             if (hours === '12') hours = '00';
             if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
-            
-            // Pad numbers with leading zero (e.g., 9 -> 09)
             return `${String(hours).padStart(2, '0')}:${minutes}`;
         }
 
@@ -694,18 +709,13 @@
                 document.getElementById('editId').value = ev.id;
                 document.getElementById('inpTitle').value = ev.title;
                 document.getElementById('inpDate').value = ev.date;
-                
-                // Parse existing time string (e.g. "09:00 AM - 10:00 AM")
                 if(ev.time) {
                     const parts = ev.time.split(' - ');
-                    // Try to convert "09:00 AM" -> "09:00"
                     document.getElementById('inpStartTime').value = convertTo24Hour(parts[0]);
-                    // If there is a second part, convert it too
                     if(parts[1]) {
                         document.getElementById('inpEndTime').value = convertTo24Hour(parts[1]);
                     }
                 }
-
                 document.getElementById('inpVenue').value = ev.venue;
                 document.getElementById('inpNotes').value = ev.notes || "";
                 document.getElementById('inpWeek').value = ev.week;
@@ -722,8 +732,8 @@
                 document.getElementById('editId').value = "";
                 document.getElementById('inpTitle').value = "";
                 document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('inpStartTime').value = "09:00"; // Default start
-                document.getElementById('inpEndTime').value = "10:00";   // Default end
+                document.getElementById('inpStartTime').value = "09:00"; 
+                document.getElementById('inpEndTime').value = "10:00";   
                 document.getElementById('inpVenue').value = "TBC";
                 document.getElementById('inpNotes').value = "";
                 document.getElementById('inpWeek').value = currentWeek;
@@ -746,20 +756,17 @@
             let lect = document.getElementById('inpLecturerSelect').value;
             if(lect === "Other") lect = document.getElementById('inpLecturerText').value;
             
-            // CONVERT TIME PICKER BACK TO STRING
             const start24 = document.getElementById('inpStartTime').value;
             const end24 = document.getElementById('inpEndTime').value;
             const start12 = convertTo12Hour(start24);
             const end12 = convertTo12Hour(end24);
-            
-            // Format: "09:00 AM - 10:00 AM"
             const finalTime = `${start12} - ${end12}`;
 
             const data = {
                 title: document.getElementById('inpTitle').value,
                 lecturer: lect,
                 date: document.getElementById('inpDate').value,
-                time: finalTime, // Saving the combined string
+                time: finalTime, 
                 venue: document.getElementById('inpVenue').value,
                 notes: document.getElementById('inpNotes').value,
                 week: document.getElementById('inpWeek').value,
