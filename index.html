@@ -182,6 +182,7 @@
         .class-card.type-BST::before { background: #8b5cf6; } /* Purple */
         .class-card.type-Lecture::before { background: #3b82f6; } /* Blue */
         .class-card.type-Seminar::before { background: #f97316; } /* Orange */
+        .class-card.type-Case::before { background: #10b981; } /* Green (Case Discussion) */
         .class-card.type-Exam::before { background: #ef4444; } /* Red */
 
         .time-col { 
@@ -225,7 +226,7 @@
             .time-col { min-width: 50px; padding-right: 0.75rem; }
         }
 
-        /* --- MODALS --- */
+        /* --- MODALS FIXED UI (Floating Style) --- */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); 
             z-index: 2000; 
@@ -235,17 +236,40 @@
         .modal-overlay.active { display: flex; opacity: 1; }
 
         .detail-sheet {
-            background: var(--bg-card); width: 100%; max-width: 600px; height: 85vh;
-            border-radius: 1.5rem 1.5rem 0 0; position: absolute; bottom: 0;
+            background: var(--bg-card);
+            /* New Floating Style for Mobile */
+            width: calc(100% - 24px); /* Gap on sides */
+            max-width: 600px;
+            height: auto;
+            max-height: 85vh;
+            border-radius: 1.5rem; /* Full rounded corners */
+            position: absolute; 
+            bottom: 12px; /* Lift from bottom */
+            left: 50%;
+            /* Start hidden below */
+            transform: translateX(-50%) translateY(110%); 
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            border: 1px solid var(--border-color);
             display: flex; flex-direction: column; overflow: hidden;
-            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            border: 1px solid var(--border-color); border-bottom: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
+        
+        .modal-overlay.active .detail-sheet { 
+            transform: translateX(-50%) translateY(0); 
+        }
+
         @media(min-width: 768px) {
-            .detail-sheet { height: auto; max-height: 85vh; border-radius: 1.5rem; position: relative; transform: scale(0.95); opacity: 0; }
-            .modal-overlay.active .detail-sheet { transform: scale(1); opacity: 1; }
+            .detail-sheet { 
+                position: relative; 
+                bottom: auto; left: auto; 
+                transform: scale(0.95); 
+                opacity: 0; 
+            }
+            .modal-overlay.active .detail-sheet { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
         }
-        .modal-overlay.active .detail-sheet { transform: translateY(0); }
 
         .sheet-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: start; background: var(--bg-box); }
         .sheet-close { background: var(--bg-input); border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
@@ -371,6 +395,7 @@
                     <select id="inpType" class="form-select">
                         <option value="Lecture">Lecture</option>
                         <option value="BST">BST (Bedside Teaching)</option>
+                        <option value="Case Discussion">Case Discussion</option>
                         <option value="Seminar">Seminar</option>
                         <option value="Exam">Exam / Test</option>
                         <option value="Custom">Other</option>
@@ -441,12 +466,26 @@
         const scheduleRef = db.collection("schedule_group_b");
 
         // --- DATA ---
+        // SORTED ALPHABETICALLY & CLEANED (Dr Only)
         const lecturers = [
-            "Dr Affizal Samsudin", "Prof Dr Asri B Said", "AP Dr Chai Chee Shee", "AP Dr Ling Hwei Sung",
-            "Prof Dr Henry Gudum", "AP Dr Loh Huai Heng", "AP Dr Sim Chun Yang", "Dr Chow Han Bing",
-            "Dr Chan En Ze", "Dr Yeoh Cheng Wooi", "AP Dr Diana Ng", "AP Dr Sim Sing Yee", 
-            "Prof Dr Kuan Jew Win", "Dr Joshua Chung", "Dr Frederick De Rozario", "Other"
+            "Dr Affizal Samsudin", 
+            "Dr Asri B Said", 
+            "Dr Chai Chee Shee", 
+            "Dr Chan En Ze",
+            "Dr Chow Han Bing", 
+            "Dr Diana Ng", 
+            "Dr Frederick De Rozario", 
+            "Dr Henry Gudum",
+            "Dr Joshua Chung", 
+            "Dr Kuan Jew Win", 
+            "Dr Ling Hwei Sung", 
+            "Dr Loh Huai Heng",
+            "Dr Sim Chun Yang", 
+            "Dr Sim Sing Yee", 
+            "Dr Yeoh Cheng Wooi", 
+            "Other"
         ];
+
         let allEvents = [];
         let currentWeek = 1;
         let isAdmin = false;
@@ -581,10 +620,7 @@
                 
                 let cardsHTML = '';
                 grouped[date].forEach(ev => {
-                    // Check for TBA in both time and venue
                     const isTBC = ev.time.includes('TBA') || ev.venue.includes('TBA') || ev.time.includes('TBC') || ev.venue.includes('TBC');
-                    
-                    // Safe split if time is "TBA"
                     const timeParts = ev.time && ev.time !== "TBA" ? ev.time.split(' ') : ["TBA", ""]; 
 
                     cardsHTML += `
@@ -730,7 +766,6 @@
                         document.getElementById('inpEndTime').value = convertTo24Hour(parts[1]);
                     }
                 } else {
-                    // Reset if TBA
                     document.getElementById('inpStartTime').value = "";
                     document.getElementById('inpEndTime').value = "";
                 }
@@ -779,7 +814,6 @@
             const end24 = document.getElementById('inpEndTime').value;
             let finalTime = "TBA";
 
-            // Only calculate time if both inputs have values
             if (start24 && end24) {
                 const start12 = convertTo12Hour(start24);
                 const end12 = convertTo12Hour(end24);
@@ -791,7 +825,6 @@
                 lecturer: lect,
                 date: document.getElementById('inpDate').value,
                 time: finalTime, 
-                // Use input venue OR default to "TBA" if empty
                 venue: document.getElementById('inpVenue').value || "TBA",
                 notes: document.getElementById('inpNotes').value,
                 week: document.getElementById('inpWeek').value,
