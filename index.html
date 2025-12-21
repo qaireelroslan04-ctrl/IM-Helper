@@ -1,1 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group B - MDP30209 Timetable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans text-gray-800">
 
+    <nav class="bg-blue-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <div>
+                <h1 class="font-bold text-lg">Group B Timetable</h1>
+                <p class="text-xs text-blue-200">Rotation 2 • Medicine I</p>
+            </div>
+            <div id="statusIndicator" class="text-xs bg-blue-900 px-2 py-1 rounded-full flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-green-400"></div> Live
+            </div>
+        </div>
+    </nav>
+
+    <div class="bg-white shadow-sm sticky top-14 z-40 overflow-x-auto">
+        <div class="max-w-md mx-auto flex gap-2 p-2" id="weekFilterContainer">
+            </div>
+    </div>
+
+    <main class="max-w-md mx-auto p-4 pb-20">
+        <div id="loading" class="flex justify-center mt-10">
+            <div class="loader"></div>
+        </div>
+        
+        <div id="scheduleContainer" class="space-y-4">
+            </div>
+    </main>
+
+    <button id="addEventBtn" onclick="openModal()" class="hidden fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-xl hover:bg-blue-700 transition z-50">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <footer class="max-w-md mx-auto text-center py-6 text-gray-400 text-sm">
+        <p id="modeDisplay">Student View (Read Only)</p>
+        <button onclick="toggleAdmin()" class="mt-2 text-blue-500 underline text-xs">Admin Login</button>
+    </footer>
+
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+        <div class="bg-white rounded-lg w-full max-w-sm p-6 shadow-2xl">
+            <h2 class="text-xl font-bold mb-4" id="modalTitle">Edit Session</h2>
+            
+            <input type="hidden" id="editId">
+            
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Session Title</label>
+            <input type="text" id="editTitle" class="w-full border p-2 rounded mb-3 bg-gray-50">
+
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Lecturer</label>
+            <input type="text" id="editLecturer" class="w-full border p-2 rounded mb-3">
+
+            <div class="flex gap-2 mb-3">
+                <div class="w-1/2">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Date</label>
+                    <input type="date" id="editDate" class="w-full border p-2 rounded">
+                </div>
+                <div class="w-1/2">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Time</label>
+                    <input type="text" id="editTime" placeholder="e.g. 09:00 AM" class="w-full border p-2 rounded">
+                </div>
+            </div>
+
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Venue / Platform</label>
+            <input type="text" id="editVenue" placeholder="e.g. Ward 2A or Zoom Link" class="w-full border p-2 rounded mb-3">
+
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Week Number</label>
+            <select id="editWeek" class="w-full border p-2 rounded mb-4">
+                <option value="1">Week 1</option>
+                <option value="2">Week 2</option>
+                <option value="3">Week 3</option>
+                <option value="4">Week 4</option>
+                <option value="5">Week 5</option>
+                <option value="6">Week 6</option>
+                <option value="7">Week 7</option>
+                <option value="8">Week 8</option>
+            </select>
+
+            <div class="flex justify-between mt-4">
+                <button onclick="closeModal()" class="text-gray-500 px-4 py-2">Cancel</button>
+                <button onclick="saveSession()" class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700">Save</button>
+            </div>
+            
+            <button id="deleteBtn" onclick="deleteSession()" class="hidden w-full mt-4 text-red-500 text-xs border border-red-200 p-2 rounded hover:bg-red-50">Delete Session</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- 1. FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBd9E9VkE7bllIN13NYGz801F4Jue_VzVk",
+            authDomain: "im-helper-d3a4a.firebaseapp.com",
+            projectId: "im-helper-d3a4a",
+            storageBucket: "im-helper-d3a4a.firebasestorage.app",
+            messagingSenderId: "772636018512",
+            appId: "1:772636018512:web:b14c28259606e18d6f4e55",
+            measurementId: "G-N0F30M6Q5Y"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const scheduleRef = collection(db, "schedule_group_b");
+
+        // --- 2. STATE MANAGEMENT ---
+        let currentWeek = 1;
+        let isAdmin = false;
+        let allEvents = [];
+
+        // --- 3. SEED DATA (INITIAL UPLOAD) ---
+        // Based on the guidebook provided.
+        const seedData = [
+            // WEEK 1
+            { title: "Briefing & Intro", lecturer: "Dr Affizal", date: "2025-12-22", time: "09:00 AM", venue: "Online", week: 1, type: "Lecture" },
+            { title: "Gastro Intro", lecturer: "Dr Affizal", date: "2025-12-22", time: "TBC (AM)", venue: "Online", week: 1, type: "Lecture" },
+            { title: "Cardio Intro", lecturer: "AP Dr Ling HS", date: "2025-12-22", time: "TBC (PM)", venue: "Online", week: 1, type: "Lecture" },
+            { title: "Endocrine Intro", lecturer: "AP Dr Loh HH", date: "2025-12-23", time: "TBC (AM)", venue: "Online", week: 1, type: "Lecture" },
+            { title: "Respiratory Intro", lecturer: "AP Dr Chai CS", date: "2025-12-23", time: "TBC (PM)", venue: "Online", week: 1, type: "Lecture" },
+            { title: "Neurology Intro", lecturer: "AP Dr Sim CY", date: "2025-12-26", time: "TBC (AM)", venue: "Online", week: 1, type: "Lecture" },
+            
+            // WEEK 2 (Subgroup B Specifics)
+            { title: "Cardio Lecture (LHS 2)", lecturer: "AP Dr Ling HS", date: "2025-12-29", time: "08:00 AM", venue: "TBC", week: 2, type: "Lecture" },
+            { title: "BST (PJS) Session", lecturer: "AP Dr Ling HS (B LHS 4)", date: "2025-12-29", time: "TBC (AM)", venue: "PJS", week: 2, type: "BST" },
+            { title: "BST (SGH) Session", lecturer: "Prof Dr Henry G (B HG 1)", date: "2025-12-30", time: "TBC (AM)", venue: "SGH", week: 2, type: "BST" },
+            { title: "Combined BST (PJS)", lecturer: "Dr Chow HB (AB CHB 2)", date: "2026-01-02", time: "TBC (AM)", venue: "PJS", week: 2, type: "BST" },
+            { title: "Resp Seminar", lecturer: "AP Dr Chai CS", date: "2026-01-02", time: "TBC (AM)", venue: "TBC", week: 2, type: "Seminar" },
+            { title: "Resp Lecture", lecturer: "AP Dr Chai CS", date: "2026-01-02", time: "TBC (PM)", venue: "TBC", week: 2, type: "Lecture" },
+
+            // WEEK 3 (Subgroup B Specifics)
+            { title: "BST (PJS)", lecturer: "AP Dr Loh HH (B LHH 3)", date: "2026-01-05", time: "TBC (AM)", venue: "PJS", week: 3, type: "BST" },
+            { title: "Case Discussion", lecturer: "Dr Chan EZ (AB CEZ 2)", date: "2026-01-05", time: "TBC (PM)", venue: "TBC", week: 3, type: "CD" },
+            { title: "BST (SGH)", lecturer: "AP Dr Loh HH (B LHH 3)", date: "2026-01-06", time: "TBC (AM)", venue: "SGH", week: 3, type: "BST" },
+            { title: "Gastro Lecture", lecturer: "Dr Affizal (AF 3)", date: "2026-01-06", time: "TBC (PM)", venue: "TBC", week: 3, type: "Lecture" },
+            { title: "BST (SGH)", lecturer: "Dr Joshua (B JOSHUA 2)", date: "2026-01-07", time: "TBC (AM)", venue: "SGH", week: 3, type: "BST" },
+            { title: "Gastro Seminar", lecturer: "Dr Affizal (AF 4)", date: "2026-01-07", time: "TBC (PM)", venue: "TBC", week: 3, type: "Seminar" },
+            { title: "BST (PJS)", lecturer: "Dr Yeoh CW (B YEOH 1)", date: "2026-01-08", time: "TBC (AM)", venue: "PJS", week: 3, type: "BST" },
+            { title: "Inf. Disease Lecture", lecturer: "AP Dr Diana Ng", date: "2026-01-08", time: "TBC (PM)", venue: "TBC", week: 3, type: "Lecture" },
+            { title: "Combined Case Disc", lecturer: "Dr Affizal (BE AF 5)", date: "2026-01-09", time: "TBC (PM)", venue: "TBC", week: 3, type: "CD" }
+        ];
+
+        async function seedDatabase() {
+            const snapshot = await getDocs(scheduleRef);
+            if (snapshot.empty) {
+                console.log("Database empty. Seeding initial data...");
+                seedData.forEach(async (item) => {
+                    await addDoc(scheduleRef, item);
+                });
+                alert("App initialized! Default schedule loaded.");
+            }
+        }
+        
+        // Run seed check on load
+        seedDatabase();
+
+        // --- 4. REAL-TIME LISTENER ---
+        const q = query(scheduleRef, orderBy("date"), orderBy("time"));
+        onSnapshot(q, (snapshot) => {
+            allEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderSchedule();
+            document.getElementById('loading').classList.add('hidden');
+        });
+
+        // --- 5. RENDERING LOGIC ---
+        window.renderSchedule = function() {
+            const container = document.getElementById('scheduleContainer');
+            container.innerHTML = '';
+
+            // Filter by week
+            const weekEvents = allEvents.filter(e => e.week == currentWeek);
+
+            if (weekEvents.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-400 mt-10">No classes scheduled for Week ${currentWeek}. <br> ${isAdmin ? 'Click + to add.' : ''}</div>`;
+                return;
+            }
+
+            // Group by Date
+            const grouped = {};
+            weekEvents.forEach(event => {
+                if (!grouped[event.date]) grouped[event.date] = [];
+                grouped[event.date].push(event);
+            });
+
+            // Render Groups
+            Object.keys(grouped).sort().forEach(date => {
+                // Date Header
+                const dateObj = new Date(date);
+                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                
+                container.innerHTML += `<div class="font-bold text-gray-500 text-sm mt-4 mb-2 pl-2 border-l-4 border-blue-500">${dayName}</div>`;
+
+                // Event Cards
+                grouped[date].forEach(event => {
+                    const isPending = event.time.includes("TBC") || event.venue === "N/A" || event.venue === "TBC";
+                    const statusColor = isPending ? "border-red-400 bg-red-50" : "border-green-400 bg-white";
+                    const icon = getIcon(event.type);
+
+                    const html = `
+                        <div class="relative p-4 rounded-lg shadow-sm border-l-4 ${statusColor} mb-3 flex justify-between items-center transition hover:shadow-md" onclick="handleCardClick('${event.id}')">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded ${getTypeColor(event.type)} text-white">${event.type}</span>
+                                    ${isPending ? '<span class="text-xs text-red-600 font-bold animate-pulse">Action Required</span>' : ''}
+                                </div>
+                                <h3 class="font-bold text-lg leading-tight">${event.title}</h3>
+                                <p class="text-sm text-gray-600 italic">${event.lecturer}</p>
+                                <div class="mt-2 flex items-center gap-4 text-sm text-gray-700">
+                                    <div class="flex items-center gap-1"><i class="far fa-clock text-blue-500"></i> ${event.time}</div>
+                                    <div class="flex items-center gap-1"><i class="fas fa-map-marker-alt text-red-500"></i> ${event.venue}</div>
+                                </div>
+                            </div>
+                            ${isAdmin ? '<div class="text-blue-500 ml-2"><i class="fas fa-pen"></i></div>' : ''}
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+            });
+        }
+
+        // --- 6. HELPERS ---
+        function getIcon(type) {
+            if(type === 'BST') return 'fa-user-md';
+            if(type === 'Lecture') return 'fa-chalkboard-teacher';
+            if(type === 'Seminar') return 'fa-users';
+            return 'fa-calendar';
+        }
+
+        function getTypeColor(type) {
+            if(type === 'BST') return 'bg-purple-500';
+            if(type === 'Lecture') return 'bg-blue-500';
+            if(type === 'Seminar') return 'bg-orange-500';
+            return 'bg-gray-500';
+        }
+
+        // --- 7. ADMIN FUNCTIONS ---
+        window.toggleAdmin = function() {
+            if (isAdmin) {
+                isAdmin = false;
+                document.getElementById('modeDisplay').innerText = "Student View (Read Only)";
+                document.getElementById('addEventBtn').classList.add('hidden');
+                document.querySelector('footer button').innerText = "Admin Login";
+                renderSchedule();
+            } else {
+                const pass = prompt("Enter Admin Passcode:");
+                if (pass === "admin123") {
+                    isAdmin = true;
+                    document.getElementById('modeDisplay').innerText = "Admin Mode (You can edit)";
+                    document.getElementById('addEventBtn').classList.remove('hidden');
+                    document.querySelector('footer button').innerText = "Logout";
+                    renderSchedule();
+                } else {
+                    alert("Wrong passcode");
+                }
+            }
+        }
+
+        window.handleCardClick = function(id) {
+            if (!isAdmin) return;
+            const event = allEvents.find(e => e.id === id);
+            openModal(event);
+        }
+
+        window.openModal = function(event = null) {
+            document.getElementById('editModal').classList.remove('hidden');
+            if (event) {
+                document.getElementById('modalTitle').innerText = "Edit Session";
+                document.getElementById('editId').value = event.id;
+                document.getElementById('editTitle').value = event.title;
+                document.getElementById('editLecturer').value = event.lecturer;
+                document.getElementById('editDate').value = event.date;
+                document.getElementById('editTime').value = event.time;
+                document.getElementById('editVenue').value = event.venue;
+                document.getElementById('editWeek').value = event.week;
+                document.getElementById('deleteBtn').classList.remove('hidden');
+            } else {
+                // New Event
+                document.getElementById('modalTitle').innerText = "New Session";
+                document.getElementById('editId').value = "";
+                document.getElementById('editTitle').value = "";
+                document.getElementById('editLecturer').value = "";
+                document.getElementById('editDate').value = ""; // Default today
+                document.getElementById('editTime').value = "TBC";
+                document.getElementById('editVenue').value = "TBC";
+                document.getElementById('editWeek').value = currentWeek;
+                document.getElementById('deleteBtn').classList.add('hidden');
+            }
+        }
+
+        window.closeModal = function() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        window.saveSession = async function() {
+            const id = document.getElementById('editId').value;
+            const data = {
+                title: document.getElementById('editTitle').value,
+                lecturer: document.getElementById('editLecturer').value,
+                date: document.getElementById('editDate').value,
+                time: document.getElementById('editTime').value,
+                venue: document.getElementById('editVenue').value,
+                week: document.getElementById('editWeek').value,
+                type: "Custom" // Simplified for new adds
+            };
+
+            if (id) {
+                // Update
+                const docRef = doc(db, "schedule_group_b", id);
+                await updateDoc(docRef, data);
+            } else {
+                // Create
+                await addDoc(scheduleRef, data);
+            }
+            closeModal();
+        }
+
+        window.deleteSession = async function() {
+            const id = document.getElementById('editId').value;
+            if(confirm("Are you sure you want to delete this session?")) {
+                await deleteDoc(doc(db, "schedule_group_b", id));
+                closeModal();
+            }
+        }
+
+        // --- 8. WEEK NAVIGATION ---
+        const weekContainer = document.getElementById('weekFilterContainer');
+        for (let i = 1; i <= 8; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = `Week ${i}`;
+            btn.className = `flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition ${i === 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`;
+            btn.onclick = () => setWeek(i, btn);
+            weekContainer.appendChild(btn);
+        }
+
+        window.setWeek = function(week, btnElement) {
+            currentWeek = week;
+            renderSchedule();
+            
+            // Update styling
+            Array.from(weekContainer.children).forEach(b => {
+                b.className = 'flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold bg-gray-200 text-gray-600';
+            });
+            btnElement.className = 'flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold bg-blue-600 text-white';
+        }
+    </script>
+</body>
+</html>
