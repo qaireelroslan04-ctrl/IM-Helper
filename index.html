@@ -113,7 +113,7 @@
             flex-shrink: 0; 
         }
 
-        /* SIDEBAR TOGGLE BUTTONS */
+        /* NEW VIEW TOGGLE */
         .view-toggle {
             display: flex;
             background: var(--bg-input);
@@ -210,7 +210,7 @@
         .class-card.type-BST::before { background: #8b5cf6; } /* Purple */
         .class-card.type-Lecture::before { background: #3b82f6; } /* Blue */
         .class-card.type-Seminar::before { background: #f97316; } /* Orange */
-        .class-card.type-Case::before { background: #10b981; } /* Green */
+        .class-card.type-Case::before { background: #10b981; } /* Green (Case Discussion) */
         .class-card.type-Exam::before { background: #ef4444; } /* Red */
 
         .time-col { 
@@ -254,7 +254,7 @@
             .time-col { min-width: 50px; padding-right: 0.75rem; }
         }
 
-        /* --- MODALS FIXED UI --- */
+        /* --- MODALS FIXED UI (Floating Style) --- */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); 
             z-index: 2000; 
@@ -265,6 +265,7 @@
 
         .detail-sheet {
             background: var(--bg-card);
+            /* Floating Style for Mobile */
             width: calc(100% - 24px); 
             max-width: 600px;
             height: auto;
@@ -476,10 +477,10 @@
                     <div id="divOtherLecturer" class="hidden" style="margin-top: 0.5rem; border-left: 2px solid var(--accent-color); padding-left: 10px;">
                         <label class="form-label" style="font-size: 0.75rem;">Name</label>
                         <input type="text" id="inpLecturerText" class="form-input" placeholder="Enter Name...">
-                        
-                        <label class="form-label" style="font-size: 0.75rem; margin-top: 0.5rem;">Custom Phone No.</label>
-                        <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="e.g. 60123456789">
                     </div>
+                    
+                    <label class="form-label" style="margin-top: 0.5rem;">Lecturer Phone No.</label>
+                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="e.g. 60123456789">
                 </div>
                 
                 <div class="form-group">
@@ -555,34 +556,32 @@
 
         // --- DATA: LECTURERS & CONTACTS ---
         const lecturerContacts = {
-            "Dr Affizal Samsudin": "",
-            "Dr Asri B Said": "",
-            "Dr Chai Chee Shee": "",
-            "Dr Chan En Ze": "",
-            "Dr Chow Han Bing": "",
-            "Dr Diana Ng": "",
-            "Dr Frederick De Rozario": "",
-            "Dr Henry Gudum": "",
-            "Dr Joshua Chung": "",
-            "Dr Kuan Jew Win": "",
-            "Dr Ling Hwei Sung": "",
-            "Dr Loh Huai Heng": "",
-            "Dr Sim Chun Yang": "",
-            "Dr Sim Sing Yee": "",
-            "Dr Yeoh Cheng Wooi": ""
+            "Dr Affizal Samsudin": "60176631789",
+            "Dr Asri B Said": "60138021143",
+            "Dr Chai Chee Shee": "60198188265",
+            "Dr Chan En Ze": "60105054955",
+            "Dr Chow Han Bing": "60192712889",
+            "Dr Diana Ng": "60198198265",
+            "Dr Frederick De Rozario": "60168678252",
+            "Dr Henry Gudum": "60198895047",
+            "Dr Joshua Chung": "60168963966",
+            "Dr Kuan Jew Win": "60198593011",
+            "Dr Ling Hwei Sung": "60128939596",
+            "Dr Loh Huai Heng": "60122010765",
+            "Dr Sim Chun Yang": "60138273338",
+            "Dr Sim Sing Yee": "60138338862",
+            "Dr Yeoh Cheng Wooi": "60182628290"
         };
 
-        // Standard sorted keys for Admin dropdown
         const lecturers = Object.keys(lecturerContacts).sort();
         lecturers.push("Other");
 
         let allEvents = [];
         let currentWeek = 1;
-        let viewMode = 'week'; // 'week' or 'lecturer'
+        let viewMode = 'week'; 
         let currentLecturer = null;
         let isAdmin = false;
 
-        // --- HELPER: Close Sidebar if Open ---
         function checkSidebar() {
             const sb = document.getElementById('sidebar');
             if(sb.classList.contains('open')) {
@@ -590,7 +589,6 @@
             }
         }
 
-        // --- THEME ---
         function initTheme() {
             const saved = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', saved);
@@ -610,14 +608,11 @@
             document.getElementById('backdrop').classList.toggle('open');
         }
 
-        // --- VIEW SWITCHING ---
         function switchView(mode) {
             viewMode = mode;
             document.getElementById('btnViewWeek').classList.toggle('active', mode === 'week');
             document.getElementById('btnViewLecturer').classList.toggle('active', mode === 'lecturer');
-            
             renderSidebarNav();
-            // If switching to lecturer mode and no lecturer selected yet, clear schedule or prompt
             if (mode === 'lecturer' && !currentLecturer) {
                  document.getElementById('scheduleContainer').innerHTML = '<div style="text-align:center; padding: 4rem; color: var(--text-muted);">Select a Lecturer from the menu.</div>';
             } else {
@@ -625,7 +620,6 @@
             }
         }
 
-        // --- DATA LOGIC ---
         function calculateCurrentWeek() {
             const startDate = new Date('2025-12-22T00:00:00');
             const today = new Date();
@@ -643,7 +637,6 @@
             else if(currentLecturer) renderSchedule();
         });
 
-        // --- RENDER SIDEBAR ---
         function renderSidebarNav() {
             const list = document.getElementById('weekList');
             list.innerHTML = '';
@@ -664,8 +657,6 @@
                 }
                 document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
             } else {
-                // LECTURER VIEW
-                // 1. Collect all unique names from DB + Hardcoded list
                 const allNames = new Set(Object.keys(lecturerContacts));
                 allEvents.forEach(e => { if(e.lecturer) allNames.add(e.lecturer); });
                 const sortedNames = Array.from(allNames).sort();
@@ -681,7 +672,6 @@
             }
         }
 
-        // --- SORTING HELPER ---
         function getMinutes(timeStr) {
             if (!timeStr) return 9999;
             let startPart = timeStr.split('-')[0].trim(); 
@@ -694,7 +684,6 @@
             return (hours * 60) + minutes;
         }
 
-        // --- RENDER SCHEDULE ---
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
             container.innerHTML = '';
@@ -710,7 +699,6 @@
                 document.getElementById('mainHeaderTitle').innerText = currentLecturer;
             }
             
-            // Sort by Date then Time
             filteredEvents.sort((a, b) => {
                 if (a.date !== b.date) return a.date.localeCompare(b.date);
                 return getMinutes(a.time) - getMinutes(b.time);
@@ -801,7 +789,6 @@
             document.getElementById('scheduleContainer').scrollTop = 0;
         }
 
-        // --- HEADER SCROLL LOGIC ---
         const mainTitle = document.getElementById('mainHeaderTitle');
         const scrollContainer = document.getElementById('scheduleContainer');
 
@@ -821,7 +808,6 @@
             }
         });
 
-        // --- DETAILS ---
         let currentDetailId = null;
         function openDetail(id) {
             checkSidebar(); 
@@ -834,21 +820,18 @@
             document.getElementById('detailVenue').innerText = ev.venue;
             document.getElementById('detailNotes').innerText = ev.notes || "No additional notes provided.";
             
-            // --- CONTACT BUTTON LOGIC ---
             const btnGroup = document.getElementById('contactSection');
             btnGroup.innerHTML = ''; 
             btnGroup.classList.add('hidden');
 
-            let phone = "";
-            // Check hardcoded list first
-            if (lecturerContacts[ev.lecturer]) {
-                phone = lecturerContacts[ev.lecturer];
-            } else if (ev.lecturerPhone) {
-                // Then check custom saved phone
-                phone = ev.lecturerPhone;
+            // --- CONTACT BUTTON LOGIC ---
+            // 1. Check if Saved Phone Exists OR Fallback to Hardcoded List
+            let phone = ev.lecturerPhone; // Custom saved phone (priority)
+            
+            if (!phone && lecturerContacts[ev.lecturer]) {
+                phone = lecturerContacts[ev.lecturer]; // Hardcoded list (fallback)
             }
 
-            // 1. WhatsApp Lecturer Button
             if (phone) {
                 const cleanPhone = phone.replace(/[^0-9]/g, '');
                 btnGroup.innerHTML += `
@@ -860,7 +843,6 @@
                 btnGroup.classList.remove('hidden');
             }
 
-            // 2. WhatsApp Support/Related Button
             if (ev.extraPhone) {
                 const cleanExtra = ev.extraPhone.replace(/[^0-9]/g, '');
                 btnGroup.innerHTML += `
@@ -877,7 +859,6 @@
         }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
 
-        // --- TIME HELPER FUNCTIONS ---
         function convertTo12Hour(timeStr) {
             if(!timeStr) return "";
             let [h, m] = timeStr.split(':');
@@ -898,7 +879,6 @@
             return `${String(hours).padStart(2, '0')}:${minutes}`;
         }
 
-        // --- ADMIN ---
         function adminLogin() {
             if(isAdmin) {
                 isAdmin = false;
@@ -947,8 +927,15 @@
                 document.getElementById('inpVenue').value = ev.venue === "TBA" ? "" : ev.venue;
                 document.getElementById('inpNotes').value = ev.notes || "";
                 document.getElementById('inpWeek').value = ev.week;
-                document.getElementById('inpExtraPhone').value = ev.extraPhone || ""; // Load Extra Phone
+                document.getElementById('inpExtraPhone').value = ev.extraPhone || "";
                 
+                // PREFILL PHONE (Priority: Saved > Hardcoded)
+                let existingPhone = ev.lecturerPhone || "";
+                if (!existingPhone && lecturerContacts[ev.lecturer]) {
+                    existingPhone = lecturerContacts[ev.lecturer];
+                }
+                document.getElementById('inpLecturerPhone').value = existingPhone;
+
                 document.getElementById('btnDelete').classList.remove('hidden');
                 
                 if(lecturerContacts.hasOwnProperty(ev.lecturer)) {
@@ -958,14 +945,12 @@
                     sel.value = "Other";
                     document.getElementById('divOtherLecturer').classList.remove('hidden');
                     document.getElementById('inpLecturerText').value = ev.lecturer;
-                    document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || ""; // Load Custom Phone
                 }
             } else {
                 document.getElementById('editId').value = "";
                 document.getElementById('inpType').value = "Lecture"; 
                 document.getElementById('inpTitle').value = "";
                 
-                // Smart Date Defaulting (Year + 1 if Dec)
                 const today = new Date();
                 const nextYear = today.getFullYear() + 1;
                 const defaultDate = today.getMonth() === 11 ? `${nextYear}-01-01` : today.toISOString().split('T')[0];
@@ -977,12 +962,12 @@
                 document.getElementById('inpNotes').value = "";
                 document.getElementById('inpWeek').value = currentWeek;
                 document.getElementById('inpExtraPhone').value = "";
+                document.getElementById('inpLecturerPhone').value = "";
                 
                 document.getElementById('btnDelete').classList.add('hidden');
                 sel.value = "";
                 document.getElementById('divOtherLecturer').classList.add('hidden');
                 document.getElementById('inpLecturerText').value = "";
-                document.getElementById('inpLecturerPhone').value = "";
             }
             closeModal('detailModal');
             document.getElementById('editModal').classList.add('active');
@@ -999,11 +984,9 @@
         async function saveClass() {
             const id = document.getElementById('editId').value;
             let lect = document.getElementById('inpLecturerSelect').value;
-            let lectPhone = null;
-
+            
             if(lect === "Other") {
                 lect = document.getElementById('inpLecturerText').value;
-                lectPhone = document.getElementById('inpLecturerPhone').value; 
             }
             
             const start24 = document.getElementById('inpStartTime').value;
@@ -1019,7 +1002,7 @@
             const data = {
                 title: document.getElementById('inpTitle').value,
                 lecturer: lect,
-                lecturerPhone: lectPhone, 
+                lecturerPhone: document.getElementById('inpLecturerPhone').value, // Save for ANY lecturer
                 extraPhone: document.getElementById('inpExtraPhone').value, 
                 date: document.getElementById('inpDate').value,
                 time: finalTime, 
