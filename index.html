@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- 1. CSS VARIABLES --- */
+        /* --- CSS VARIABLES --- */
         :root {
             --bg-body: #000000;
             --bg-sidebar: #050505;
@@ -23,11 +23,6 @@
             --accent-bg: #172554;
             --accent-text: #bfdbfe;
             --header-bg: rgba(0, 0, 0, 0.85);
-            --shadow-card: none;
-            
-            /* Status Colors */
-            --status-green: #059669;
-            --status-red: #dc2626;
             --status-yellow: #d97706;
         }
 
@@ -44,7 +39,6 @@
             --accent-bg: #e0f2fe;
             --accent-text: #0c4a6e;
             --header-bg: rgba(255, 255, 255, 0.95);
-            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -95,20 +89,34 @@
         /* --- LAYOUT --- */
         .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
 
-        /* Sidebar (Week Nav) */
+        /* --- SLEEK SIDEBAR START --- */
         aside {
-            width: 300px; background: var(--bg-sidebar);
+            width: 300px; 
+            background: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
-            display: flex; flex-direction: column;
-            overflow-y: auto; z-index: 40;
+            display: flex; 
+            flex-direction: column; /* Key for fixed footer */
+            z-index: 40;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
         }
 
         .nav-header { 
             padding: 1.5rem; font-size: 0.75rem; text-transform: uppercase; 
             letter-spacing: 0.1em; color: var(--text-muted); font-weight: 800;
             border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0; /* Don't shrink */
         }
+
+        /* Scrollable List Area */
+        .nav-scroll-area {
+            flex: 1; /* Takes remaining space */
+            overflow-y: auto; /* Internal scroll */
+            padding-bottom: 1rem;
+        }
+        /* Hide scrollbar for sleekness */
+        .nav-scroll-area::-webkit-scrollbar { width: 4px; }
+        .nav-scroll-area::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
         .nav-item {
             padding: 1rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color);
@@ -119,6 +127,16 @@
         .nav-item .nav-title { font-weight: 600; font-size: 0.95rem; }
         .nav-item .nav-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
+        /* Fixed Footer for Admin */
+        .sidebar-footer {
+            flex-shrink: 0;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(10px); /* Sleek blur */
+        }
+        /* --- SLEEK SIDEBAR END --- */
+
         /* Main Content (Timetable) */
         main {
             flex: 1; overflow-y: auto; padding: 1rem;
@@ -127,24 +145,18 @@
 
         /* Day Group */
         .day-group { 
-            /* VISUAL DISTINCTION ADDED HERE */
             margin-bottom: 2rem; 
             padding-bottom: 2rem; 
-            border-bottom: 8px solid var(--bg-input); /* Thick separator */
+            border-bottom: 8px solid var(--bg-input);
             scroll-margin-top: 80px; 
         }
-        
-        .day-group:last-child {
-            border-bottom: none;
-        }
+        .day-group:last-child { border-bottom: none; }
 
         .day-header {
-            /* STICKY REMOVED */
             position: relative; 
             background: transparent;
             z-index: 10;
             padding: 1rem 0 0.5rem 0; margin-bottom: 0.5rem;
-            /* Border removed here since we have the group separator */
             display: flex; align-items: baseline; gap: 0.5rem;
         }
         .day-name { font-size: 1.5rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; }
@@ -187,15 +199,10 @@
         }
         .card-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem; line-height: 1.2; }
         .card-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
-        
-        /* TBC Alert */
         .tbc-alert { color: var(--status-yellow); font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 
         /* Next Week Button */
-        .next-week-container {
-            padding: 2rem 0;
-            text-align: center;
-        }
+        .next-week-container { padding: 2rem 0; text-align: center; }
         .btn-next-week {
             background-color: var(--bg-input);
             color: var(--accent-color);
@@ -209,12 +216,9 @@
             width: 100%;
             max-width: 300px;
         }
-        .btn-next-week:hover {
-            background-color: var(--accent-bg);
-            border-color: var(--accent-color);
-        }
+        .btn-next-week:hover { background-color: var(--accent-bg); border-color: var(--accent-color); }
 
-        /* --- DETAILS MODAL --- */
+        /* --- MODALS --- */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100;
             backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center;
@@ -245,7 +249,7 @@
         .detail-value { font-size: 1.1rem; color: var(--text-main); line-height: 1.4; }
         .detail-note { background: var(--bg-input); padding: 1rem; border-radius: 0.5rem; border-left: 3px solid var(--accent-color); font-size: 0.95rem; }
 
-        /* --- ADMIN FAB --- */
+        /* FAB & Form */
         .fab {
             position: fixed; bottom: 2rem; right: 2rem; width: 56px; height: 56px;
             background: var(--accent-color); color: white; border-radius: 50%;
@@ -255,7 +259,6 @@
         }
         .fab:hover { transform: scale(1.1); }
 
-        /* --- MOBILE RESPONSIVENESS --- */
         .backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 35; }
         @media (max-width: 768px) {
             .menu-toggle { display: block; }
@@ -263,10 +266,8 @@
             aside.open { transform: translateX(0); }
             .backdrop.open { display: block; }
             .time-col { min-width: 50px; padding-right: 0.75rem; }
-            .time-start { font-size: 0.9rem; }
         }
 
-        /* --- FORM STYLES --- */
         .form-group { margin-bottom: 1rem; }
         .form-label { display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted); }
         .form-input, .form-select { 
@@ -278,7 +279,6 @@
         .btn { padding: 0.8rem 1.5rem; border-radius: 0.5rem; font-weight: 700; border: none; cursor: pointer; width: 100%; margin-top: 1rem; }
         .btn-primary { background: var(--accent-color); color: white; }
         .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; margin-top: 0.5rem; }
-        
         .hidden { display: none; }
     </style>
 </head>
@@ -301,11 +301,14 @@
         
         <aside id="sidebar">
             <div class="nav-header">Select Week</div>
-            <div id="weekList">
-                </div>
-            <div style="padding: 1rem;">
-                <button onclick="adminLogin()" id="adminBtn" class="btn btn-primary" style="background: var(--bg-input); color: var(--text-muted); font-size: 0.8rem;">Admin Login</button>
-                <button onclick="cleanDB()" id="cleanBtn" class="hidden btn btn-danger" style="font-size: 0.8rem;">Reset Database</button>
+            <div id="weekList" class="nav-scroll-area"></div>
+            <div class="sidebar-footer">
+                <button onclick="adminLogin()" id="adminBtn" class="btn" style="margin-top:0; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">
+                    Admin Login
+                </button>
+                <button onclick="cleanDB()" id="cleanBtn" class="hidden btn btn-danger" style="font-size: 0.8rem;">
+                    Reset Database
+                </button>
             </div>
         </aside>
 
@@ -331,21 +334,20 @@
             <div class="sheet-body">
                 <div class="detail-row">
                     <div class="detail-label">Time & Date</div>
-                    <div class="detail-value" id="detailTime">09:00 AM • Mon, 22 Dec</div>
+                    <div class="detail-value" id="detailTime"></div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Lecturer</div>
-                    <div class="detail-value" id="detailLecturer">Dr. Affizal</div>
+                    <div class="detail-value" id="detailLecturer"></div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Venue</div>
-                    <div class="detail-value" id="detailVenue">Online</div>
+                    <div class="detail-value" id="detailVenue"></div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Notes</div>
-                    <div class="detail-note" id="detailNotes">No additional notes provided.</div>
+                    <div class="detail-note" id="detailNotes"></div>
                 </div>
-                
                 <button id="editBtn" class="hidden btn btn-primary" onclick="editCurrentClass()">Edit Class</button>
             </div>
         </div>
@@ -359,40 +361,33 @@
             </div>
             <div class="sheet-body">
                 <input type="hidden" id="editId">
-                
                 <div class="form-group">
                     <label class="form-label">Title</label>
                     <input type="text" id="inpTitle" class="form-input" placeholder="e.g. Cardio BST">
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Lecturer</label>
                     <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()">
                         <option value="">Select Lecturer...</option>
-                        </select>
+                    </select>
                     <input type="text" id="inpLecturerText" class="form-input hidden" placeholder="Enter Name..." style="margin-top: 0.5rem;">
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Date</label>
                     <input type="date" id="inpDate" class="form-input">
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Time</label>
                     <input type="text" id="inpTime" class="form-input" placeholder="09:00 AM">
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Venue</label>
                     <input type="text" id="inpVenue" class="form-input" placeholder="e.g. Ward 2A / Zoom">
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Notes (Optional)</label>
                     <textarea id="inpNotes" class="form-input" rows="3" placeholder="e.g. Bring logbook"></textarea>
                 </div>
-                
                 <div class="form-group">
                      <label class="form-label">Week</label>
                      <select id="inpWeek" class="form-select">
@@ -401,7 +396,6 @@
                          <option value="7">Week 7</option><option value="8">Week 8</option>
                      </select>
                 </div>
-
                 <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
                 <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Class</button>
             </div>
@@ -409,7 +403,7 @@
     </div>
 
     <script>
-        // --- 1. CONFIG & INIT ---
+        // --- CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBd9E9VkE7bllIN13NYGz801F4Jue_VzVk",
             authDomain: "im-helper-d3a4a.firebaseapp.com",
@@ -423,19 +417,18 @@
         db.settings({ experimentalForceLongPolling: true });
         const scheduleRef = db.collection("schedule_group_b");
 
-        // --- 2. DATA ---
+        // --- DATA ---
         const lecturers = [
             "Dr Affizal Samsudin", "Prof Dr Asri B Said", "AP Dr Chai Chee Shee", "AP Dr Ling Hwei Sung",
             "Prof Dr Henry Gudum", "AP Dr Loh Huai Heng", "AP Dr Sim Chun Yang", "Dr Chow Han Bing",
             "Dr Chan En Ze", "Dr Yeoh Cheng Wooi", "AP Dr Diana Ng", "AP Dr Sim Sing Yee", 
             "Prof Dr Kuan Jew Win", "Dr Joshua Chung", "Dr Frederick De Rozario", "Other"
         ];
-
         let allEvents = [];
         let currentWeek = 1;
         let isAdmin = false;
 
-        // --- 3. THEME & UI ---
+        // --- THEME ---
         function initTheme() {
             const saved = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', saved);
@@ -450,21 +443,18 @@
             initTheme();
         }
         initTheme();
-
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('backdrop').classList.toggle('open');
         }
 
-        // --- 4. DATA LOGIC ---
+        // --- DATA LOGIC ---
         function calculateCurrentWeek() {
             const startDate = new Date('2025-12-22T00:00:00');
             const today = new Date();
             const diffTime = Math.abs(today - startDate);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            
             if (today < startDate) return 1;
-            
             const weekNum = Math.ceil(diffDays / 7);
             return weekNum > 8 ? 8 : weekNum;
         }
@@ -475,41 +465,30 @@
             renderSchedule();
         });
 
-        // --- 5. RENDER SIDEBAR ---
+        // --- RENDER SIDEBAR ---
         function renderSidebarNav() {
             const list = document.getElementById('weekList');
             list.innerHTML = '';
-            
             const start = new Date('2025-12-22');
-            
             for(let i=1; i<=8; i++) {
                 const wStart = new Date(start);
                 wStart.setDate(start.getDate() + (i-1)*7);
                 const wEnd = new Date(wStart);
                 wEnd.setDate(wStart.getDate() + 6);
-                
                 const format = d => `${d.getDate()}/${d.getMonth()+1}`;
-                
                 const div = document.createElement('div');
                 div.className = `nav-item ${i === currentWeek ? 'active' : ''}`;
                 div.onclick = () => { currentWeek = i; renderSidebarNav(); renderSchedule(); toggleSidebar(); };
-                div.innerHTML = `
-                    <div>
-                        <div class="nav-title">Week ${i}</div>
-                        <div class="nav-sub">${format(wStart)} - ${format(wEnd)}</div>
-                    </div>
-                    ${i === currentWeek ? '<div>•</div>' : ''}
-                `;
+                div.innerHTML = `<div><div class="nav-title">Week ${i}</div><div class="nav-sub">${format(wStart)} - ${format(wEnd)}</div></div>${i === currentWeek ? '<div>•</div>' : ''}`;
                 list.appendChild(div);
             }
             document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
         }
 
-        // --- 6. RENDER SCHEDULE (MAIN) ---
+        // --- RENDER SCHEDULE ---
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
             container.innerHTML = '';
-
             const weekEvents = allEvents.filter(e => e.week == currentWeek);
             const todayStr = new Date().toISOString().split('T')[0];
 
@@ -519,7 +498,6 @@
                 return;
             }
 
-            // Group by Date
             const grouped = {};
             weekEvents.forEach(e => {
                 if(!grouped[e.date]) grouped[e.date] = [];
@@ -534,9 +512,7 @@
 
                 const dayBlock = document.createElement('div');
                 dayBlock.className = 'day-group';
-                // Add data attributes for scroll spy
                 dayBlock.dataset.dayName = dayName;
-                
                 if(isToday) dayBlock.id = "todayMarker";
 
                 let headerHTML = `
@@ -551,7 +527,6 @@
                 grouped[date].forEach(ev => {
                     const isTBC = ev.time.includes('TBC') || ev.venue.includes('TBC');
                     const timeParts = ev.time.split(' '); 
-                    
                     cardsHTML += `
                         <div class="class-card type-${ev.type || 'Custom'}" onclick="openDetail('${ev.id}')">
                             <div class="time-col">
@@ -561,23 +536,18 @@
                             <div class="info-col">
                                 <span class="card-type">${ev.type || 'Session'}</span>
                                 <div class="card-title">${ev.title}</div>
-                                <div class="card-meta">
-                                    <span>${ev.lecturer}</span> • <span>${ev.venue}</span>
-                                </div>
+                                <div class="card-meta"><span>${ev.lecturer}</span> • <span>${ev.venue}</span></div>
                                 ${isTBC ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}
                             </div>
                         </div>
                     `;
                 });
-
                 dayBlock.innerHTML = headerHTML + cardsHTML;
                 container.appendChild(dayBlock);
             });
-
-            // Add Next Week Button
+            
             appendNextWeekButton(container);
 
-            // Scroll to Today if in view
             setTimeout(() => {
                 const el = document.getElementById('todayMarker');
                 if(el) el.scrollIntoView({behavior: "smooth", block: "center"});
@@ -586,75 +556,62 @@
 
         function appendNextWeekButton(container) {
             if (currentWeek < 8) {
-                const btnContainer = document.createElement('div');
-                btnContainer.className = 'next-week-container';
-                btnContainer.innerHTML = `<button class="btn-next-week" onclick="nextWeek()">Load Next Week ↓</button>`;
-                container.appendChild(btnContainer);
+                const div = document.createElement('div');
+                div.className = 'next-week-container';
+                div.innerHTML = `<button class="btn-next-week" onclick="nextWeek()">Load Next Week ↓</button>`;
+                container.appendChild(div);
             }
         }
-
         function nextWeek() {
             currentWeek++;
             renderSidebarNav();
             renderSchedule();
-            // Scroll to top of new week
             document.getElementById('scheduleContainer').scrollTop = 0;
         }
 
-        // --- NEW: DYNAMIC HEADER LOGIC ---
+        // --- HEADER SCROLL LOGIC ---
         const mainTitle = document.getElementById('mainHeaderTitle');
         const scrollContainer = document.getElementById('scheduleContainer');
 
         scrollContainer.addEventListener('scroll', () => {
             const groups = document.querySelectorAll('.day-group');
             let found = false;
-
-            // Iterate through groups to find which one is at the top
             for (const group of groups) {
                 const rect = group.getBoundingClientRect();
-                // If the group is near the top of the viewport (taking header height ~60px into account)
                 if (rect.top <= 120 && rect.bottom > 60) {
-                    mainTitle.innerText = `Internal Medicine • ${group.dataset.dayName}`;
+                    mainTitle.innerText = group.dataset.dayName; 
                     found = true;
                     break;
                 }
             }
-            
-            // If scrolled to top or nothing matched, reset
             if (!found || scrollContainer.scrollTop < 50) {
                 mainTitle.innerText = "Internal Medicine";
             }
         });
 
-
-        // --- 7. DETAILS & MODALS ---
+        // --- DETAILS ---
         let currentDetailId = null;
-
         function openDetail(id) {
             currentDetailId = id;
             const ev = allEvents.find(e => e.id === id);
-            
             document.getElementById('detailType').innerText = ev.type || 'SESSION';
             document.getElementById('detailTitle').innerText = ev.title;
             document.getElementById('detailTime').innerText = `${ev.time} • ${ev.date}`;
             document.getElementById('detailLecturer').innerText = ev.lecturer;
             document.getElementById('detailVenue').innerText = ev.venue;
             document.getElementById('detailNotes').innerText = ev.notes || "No additional notes provided.";
-            
             document.getElementById('detailModal').classList.add('active');
-            
             if(isAdmin) document.getElementById('editBtn').classList.remove('hidden');
         }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        // --- 8. ADMIN FUNCTIONS ---
+        // --- ADMIN ---
         function adminLogin() {
             if(isAdmin) {
                 isAdmin = false;
                 document.getElementById('adminBtn').innerText = "Admin Login";
+                document.getElementById('adminBtn').style.color = "var(--text-muted)";
+                document.getElementById('adminBtn').style.borderColor = "var(--border-color)";
                 document.getElementById('fabBtn').classList.add('hidden');
                 document.getElementById('cleanBtn').classList.add('hidden');
                 alert("Logged out.");
@@ -663,6 +620,8 @@
                 if(pass === "admin123") {
                     isAdmin = true;
                     document.getElementById('adminBtn').innerText = "Logout";
+                    document.getElementById('adminBtn').style.color = "var(--accent-color)";
+                    document.getElementById('adminBtn').style.borderColor = "var(--accent-color)";
                     document.getElementById('fabBtn').classList.remove('hidden');
                     document.getElementById('cleanBtn').classList.remove('hidden');
                     renderSchedule(); 
@@ -673,9 +632,7 @@
         function openEditModal(isEdit = false) {
             const sel = document.getElementById('inpLecturerSelect');
             sel.innerHTML = '<option value="">Select Lecturer...</option>';
-            lecturers.forEach(l => {
-                sel.innerHTML += `<option value="${l}">${l}</option>`;
-            });
+            lecturers.forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
 
             if(isEdit) {
                 const ev = allEvents.find(e => e.id === currentDetailId);
@@ -687,7 +644,6 @@
                 document.getElementById('inpNotes').value = ev.notes || "";
                 document.getElementById('inpWeek').value = ev.week;
                 document.getElementById('btnDelete').classList.remove('hidden');
-                
                 if(lecturers.includes(ev.lecturer)) {
                     sel.value = ev.lecturer;
                     document.getElementById('inpLecturerText').classList.add('hidden');
@@ -706,25 +662,20 @@
                 document.getElementById('inpWeek').value = currentWeek;
                 document.getElementById('btnDelete').classList.add('hidden');
             }
-            
             closeModal('detailModal');
             document.getElementById('editModal').classList.add('active');
         }
-
         function checkLecturerSelect() {
             const val = document.getElementById('inpLecturerSelect').value;
             const txt = document.getElementById('inpLecturerText');
             if(val === "Other") txt.classList.remove('hidden');
             else txt.classList.add('hidden');
         }
-
         function editCurrentClass() { openEditModal(true); }
-
         async function saveClass() {
             const id = document.getElementById('editId').value;
             let lect = document.getElementById('inpLecturerSelect').value;
             if(lect === "Other") lect = document.getElementById('inpLecturerText').value;
-
             const data = {
                 title: document.getElementById('inpTitle').value,
                 lecturer: lect,
@@ -735,13 +686,10 @@
                 week: document.getElementById('inpWeek').value,
                 type: "Custom"
             };
-
             if(id) await scheduleRef.doc(id).update(data);
             else await scheduleRef.add(data);
-            
             closeModal('editModal');
         }
-
         async function deleteClass() {
             if(confirm("Delete this session?")) {
                 const id = document.getElementById('editId').value;
@@ -749,20 +697,12 @@
                 closeModal('editModal');
             }
         }
-
-        // --- INIT ---
         currentWeek = calculateCurrentWeek();
         renderSidebarNav();
-        
-        async function cleanDB() {
-             if(!confirm("RESET DATABASE? This deletes all data.")) return;
-             alert("Database reset function placeholder.");
-        }
-
+        async function cleanDB() { if(!confirm("Reset?")) return; alert("Reset placeholder."); }
         const styleSheet = document.createElement("style");
         styleSheet.innerText = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
         document.head.appendChild(styleSheet);
-
     </script>
 </body>
 </html>
