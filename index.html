@@ -29,6 +29,8 @@
             --accent-text: #bfdbfe;
             --header-bg: rgba(0, 0, 0, 0.85);
             --status-yellow: #d97706;
+            --whatsapp-color: #25D366;
+            --whatsapp-bg: #064e23;
         }
 
         [data-theme="light"] {
@@ -44,6 +46,7 @@
             --accent-bg: #e0f2fe;
             --accent-text: #0c4a6e;
             --header-bg: rgba(255, 255, 255, 0.95);
+            --whatsapp-bg: #dcfce7;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -100,7 +103,7 @@
             border-right: 1px solid var(--border-color);
             display: flex; 
             flex-direction: column; 
-            z-index: 999; /* Sidebar layer */
+            z-index: 999; 
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -159,7 +162,7 @@
             display: flex; align-items: baseline; gap: 0.5rem;
         }
         .day-name { font-size: 1.5rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; }
-        .day-date { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+        .day-date { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
         .today-badge {
             background: var(--accent-color); color: white; font-size: 0.6rem; 
             padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;
@@ -237,16 +240,15 @@
 
         .detail-sheet {
             background: var(--bg-card);
-            /* New Floating Style for Mobile */
-            width: calc(100% - 24px); /* Gap on sides */
+            /* Floating Style for Mobile */
+            width: calc(100% - 24px); 
             max-width: 600px;
             height: auto;
             max-height: 85vh;
-            border-radius: 1.5rem; /* Full rounded corners */
+            border-radius: 1.5rem; 
             position: absolute; 
-            bottom: 12px; /* Lift from bottom */
+            bottom: 12px; 
             left: 50%;
-            /* Start hidden below */
             transform: translateX(-50%) translateY(110%); 
             transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
             border: 1px solid var(--border-color);
@@ -279,6 +281,34 @@
         .detail-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-color); font-weight: 700; margin-bottom: 0.5rem; }
         .detail-value { font-size: 1.1rem; color: var(--text-main); line-height: 1.4; }
         .detail-note { background: var(--bg-input); padding: 1rem; border-radius: 0.5rem; border-left: 3px solid var(--accent-color); font-size: 0.95rem; }
+
+        /* CONTACT BUTTONS */
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 1rem; }
+        .btn-whatsapp {
+            background-color: var(--whatsapp-bg); 
+            color: var(--whatsapp-color);
+            border: 1px solid var(--whatsapp-color);
+            padding: 0.8rem; border-radius: 0.5rem; 
+            font-weight: 700; cursor: pointer; 
+            text-align: center; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-whatsapp:hover { opacity: 0.9; }
+        .admin-booking-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .booking-header { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 0.5rem; }
+        .booking-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .booking-label { font-size: 0.9rem; color: var(--text-main); }
+        .booking-btn { 
+            background: var(--whatsapp-color); color: white; border: none; 
+            padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; 
+            text-decoration: none;
+        }
 
         /* FAB */
         .fab {
@@ -377,6 +407,9 @@
                     <div class="detail-label">Notes</div>
                     <div class="detail-note" id="detailNotes"></div>
                 </div>
+                
+                <div id="contactSection" class="btn-group hidden"></div>
+                
                 <button id="editBtn" class="hidden btn btn-primary" onclick="editCurrentClass()">Edit Class</button>
             </div>
         </div>
@@ -395,8 +428,7 @@
                     <select id="inpType" class="form-select">
                         <option value="Lecture">Lecture</option>
                         <option value="BST">BST (Bedside Teaching)</option>
-                        <option value="Case Discussion">Case Discussion</option>
-                        <option value="Seminar">Seminar</option>
+                        <option value="Case Discussion">Case Discussion</option> <option value="Seminar">Seminar</option>
                         <option value="Exam">Exam / Test</option>
                         <option value="Custom">Other</option>
                     </select>
@@ -410,8 +442,21 @@
                     <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()">
                         <option value="">Select Lecturer...</option>
                     </select>
-                    <input type="text" id="inpLecturerText" class="form-input hidden" placeholder="Enter Name..." style="margin-top: 0.5rem;">
+                    
+                    <div id="divOtherLecturer" class="hidden" style="margin-top: 0.5rem; border-left: 2px solid var(--accent-color); padding-left: 10px;">
+                        <label class="form-label" style="font-size: 0.75rem;">Name</label>
+                        <input type="text" id="inpLecturerText" class="form-input" placeholder="Enter Name...">
+                        
+                        <label class="form-label" style="font-size: 0.75rem; margin-top: 0.5rem;">Custom Phone No.</label>
+                        <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="e.g. 60123456789">
+                    </div>
                 </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Related Phone No. (Optional)</label>
+                    <input type="tel" id="inpExtraPhone" class="form-input" placeholder="Additional contact (e.g. Officer)">
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Date</label>
                     <input type="date" id="inpDate" class="form-input">
@@ -432,6 +477,19 @@
                     <label class="form-label">Venue</label>
                     <input type="text" id="inpVenue" class="form-input" placeholder="Leave blank for TBA">
                 </div>
+
+                <div class="admin-booking-box">
+                    <div class="booking-header">Book Venue (Admin Only)</div>
+                    <div class="booking-row">
+                        <div class="booking-label">En Hazrim (Samarahan)</div>
+                        <a href="https://wa.me/60146493928" target="_blank" class="booking-btn">WhatsApp</a>
+                    </div>
+                    <div class="booking-row">
+                        <div class="booking-label">En Sadiqin (City Campus)</div>
+                        <a href="https://wa.me/601125101075" target="_blank" class="booking-btn">WhatsApp</a>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Notes (Optional)</label>
                     <textarea id="inpNotes" class="form-input" rows="3" placeholder="e.g. Bring logbook"></textarea>
@@ -465,26 +523,30 @@
         db.settings({ experimentalForceLongPolling: true });
         const scheduleRef = db.collection("schedule_group_b");
 
-        // --- DATA ---
-        // SORTED ALPHABETICALLY & CLEANED (Dr Only)
-        const lecturers = [
-            "Dr Affizal Samsudin", 
-            "Dr Asri B Said", 
-            "Dr Chai Chee Shee", 
-            "Dr Chan En Ze",
-            "Dr Chow Han Bing", 
-            "Dr Diana Ng", 
-            "Dr Frederick De Rozario", 
-            "Dr Henry Gudum",
-            "Dr Joshua Chung", 
-            "Dr Kuan Jew Win", 
-            "Dr Ling Hwei Sung", 
-            "Dr Loh Huai Heng",
-            "Dr Sim Chun Yang", 
-            "Dr Sim Sing Yee", 
-            "Dr Yeoh Cheng Wooi", 
-            "Other"
-        ];
+        // --- DATA: LECTURERS & CONTACTS ---
+        // FILL IN PHONE NUMBERS HERE inside the quotes e.g., "60123456789"
+        // Ensure keys match the lecturers list exactly.
+        const lecturerContacts = {
+            "Dr Affizal Samsudin": "60176631789",
+            "Dr Asri B Said": "60138021143",
+            "Dr Chai Chee Shee": "60198188265",
+            "Dr Chan En Ze": "60105054955",
+            "Dr Chow Han Bing": "60192712889",
+            "Dr Diana Ng": "60198198265",
+            "Dr Frederick De Rozario": "60168678252",
+            "Dr Henry Gudum": "60198895047",
+            "Dr Joshua Chung": "60168963966",
+            "Dr Kuan Jew Win": "60198593011",
+            "Dr Ling Hwei Sung": "60128939596",
+            "Dr Loh Huai Heng": "60122010765",
+            "Dr Sim Chun Yang": "60138273338",
+            "Dr Sim Sing Yee": "60138338862",
+            "Dr Yeoh Cheng Wooi": "60182628290"
+        };
+
+        // Extract names for dropdown (Sorted Alphabetically)
+        const lecturers = Object.keys(lecturerContacts).sort();
+        lecturers.push("Other");
 
         let allEvents = [];
         let currentWeek = 1;
@@ -558,18 +620,13 @@
         // --- SORTING HELPER ---
         function getMinutes(timeStr) {
             if (!timeStr) return 9999;
-            // Handle TBA or TBC by pushing them to the end (9999 mins)
             let startPart = timeStr.split('-')[0].trim(); 
             if(startPart.toUpperCase().includes('TBC') || startPart.toUpperCase().includes('TBA')) return 9999;
-
             let [time, modifier] = startPart.split(' '); 
             if(!time || !modifier) return 9999;
-            
             let [hours, minutes] = time.split(':').map(Number);
-            
             if (modifier.toUpperCase() === 'PM' && hours !== 12) hours += 12;
             if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
-            
             return (hours * 60) + minutes;
         }
 
@@ -602,7 +659,7 @@
             Object.keys(grouped).forEach(date => {
                 const dateObj = new Date(date);
                 const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-                const datePretty = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                const datePretty = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
                 const isToday = date === todayStr;
 
                 const dayBlock = document.createElement('div');
@@ -624,7 +681,7 @@
                     const timeParts = ev.time && ev.time !== "TBA" ? ev.time.split(' ') : ["TBA", ""]; 
 
                     cardsHTML += `
-                        <div class="class-card type-${ev.type || 'Custom'}" onclick="openDetail('${ev.id}')">
+                        <div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')">
                             <div class="time-col">
                                 <span class="time-start">${timeParts[0]}</span>
                                 <span class="time-ampm">${timeParts[1] || ''}</span>
@@ -697,6 +754,45 @@
             document.getElementById('detailLecturer').innerText = ev.lecturer;
             document.getElementById('detailVenue').innerText = ev.venue;
             document.getElementById('detailNotes').innerText = ev.notes || "No additional notes provided.";
+            
+            // --- CONTACT BUTTON LOGIC ---
+            const btnGroup = document.getElementById('contactSection');
+            btnGroup.innerHTML = ''; 
+            btnGroup.classList.add('hidden');
+
+            // 1. Check Primary Lecturer Phone
+            let phone = "";
+            if (lecturerContacts[ev.lecturer]) {
+                // Use hardcoded list
+                phone = lecturerContacts[ev.lecturer];
+            } else if (ev.lecturerPhone) {
+                // Use custom saved phone (for "Other")
+                phone = ev.lecturerPhone;
+            }
+
+            if (phone) {
+                const cleanPhone = phone.replace(/[^0-9]/g, '');
+                btnGroup.innerHTML += `
+                    <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-whatsapp">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                        WhatsApp Lecturer
+                    </a>
+                `;
+                btnGroup.classList.remove('hidden');
+            }
+
+            // 2. Check Extra Phone (Related Contact)
+            if (ev.extraPhone) {
+                const cleanExtra = ev.extraPhone.replace(/[^0-9]/g, '');
+                btnGroup.innerHTML += `
+                    <a href="https://wa.me/${cleanExtra}" target="_blank" class="btn-whatsapp" style="background:var(--bg-input); border-color:var(--border-color); color:var(--text-main)">
+                         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                        WhatsApp Support
+                    </a>
+                `;
+                btnGroup.classList.remove('hidden');
+            }
+            
             document.getElementById('detailModal').classList.add('active');
             if(isAdmin) document.getElementById('editBtn').classList.remove('hidden');
         }
@@ -772,26 +868,43 @@
                 document.getElementById('inpVenue').value = ev.venue === "TBA" ? "" : ev.venue;
                 document.getElementById('inpNotes').value = ev.notes || "";
                 document.getElementById('inpWeek').value = ev.week;
+                document.getElementById('inpExtraPhone').value = ev.extraPhone || ""; // Load Extra Phone
+                
                 document.getElementById('btnDelete').classList.remove('hidden');
-                if(lecturers.includes(ev.lecturer)) {
+                
+                if(lecturerContacts.hasOwnProperty(ev.lecturer)) {
                     sel.value = ev.lecturer;
-                    document.getElementById('inpLecturerText').classList.add('hidden');
+                    document.getElementById('divOtherLecturer').classList.add('hidden');
                 } else {
                     sel.value = "Other";
-                    document.getElementById('inpLecturerText').classList.remove('hidden');
+                    document.getElementById('divOtherLecturer').classList.remove('hidden');
                     document.getElementById('inpLecturerText').value = ev.lecturer;
+                    document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || ""; // Load Custom Phone
                 }
             } else {
                 document.getElementById('editId').value = "";
                 document.getElementById('inpType').value = "Lecture"; 
                 document.getElementById('inpTitle').value = "";
-                document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
+                
+                // Smart Date Defaulting (Year + 1 if Dec)
+                const today = new Date();
+                const nextYear = today.getFullYear() + 1;
+                const defaultDate = today.getMonth() === 11 ? `${nextYear}-01-01` : today.toISOString().split('T')[0];
+                document.getElementById('inpDate').value = defaultDate;
+
                 document.getElementById('inpStartTime').value = "09:00"; 
                 document.getElementById('inpEndTime').value = "10:00";   
                 document.getElementById('inpVenue').value = "";
                 document.getElementById('inpNotes').value = "";
                 document.getElementById('inpWeek').value = currentWeek;
+                document.getElementById('inpExtraPhone').value = "";
+                
                 document.getElementById('btnDelete').classList.add('hidden');
+                // Reset to default select
+                sel.value = "";
+                document.getElementById('divOtherLecturer').classList.add('hidden');
+                document.getElementById('inpLecturerText').value = "";
+                document.getElementById('inpLecturerPhone').value = "";
             }
             closeModal('detailModal');
             document.getElementById('editModal').classList.add('active');
@@ -799,16 +912,21 @@
 
         function checkLecturerSelect() {
             const val = document.getElementById('inpLecturerSelect').value;
-            const txt = document.getElementById('inpLecturerText');
-            if(val === "Other") txt.classList.remove('hidden');
-            else txt.classList.add('hidden');
+            const div = document.getElementById('divOtherLecturer');
+            if(val === "Other") div.classList.remove('hidden');
+            else div.classList.add('hidden');
         }
         function editCurrentClass() { openEditModal(true); }
         
         async function saveClass() {
             const id = document.getElementById('editId').value;
             let lect = document.getElementById('inpLecturerSelect').value;
-            if(lect === "Other") lect = document.getElementById('inpLecturerText').value;
+            let lectPhone = null;
+
+            if(lect === "Other") {
+                lect = document.getElementById('inpLecturerText').value;
+                lectPhone = document.getElementById('inpLecturerPhone').value; // Save custom phone
+            }
             
             const start24 = document.getElementById('inpStartTime').value;
             const end24 = document.getElementById('inpEndTime').value;
@@ -823,6 +941,8 @@
             const data = {
                 title: document.getElementById('inpTitle').value,
                 lecturer: lect,
+                lecturerPhone: lectPhone, // NEW FIELD
+                extraPhone: document.getElementById('inpExtraPhone').value, // NEW FIELD
                 date: document.getElementById('inpDate').value,
                 time: finalTime, 
                 venue: document.getElementById('inpVenue').value || "TBA",
