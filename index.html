@@ -178,9 +178,11 @@
             content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
             background: var(--border-color);
         }
-        .class-card.type-BST::before { background: #8b5cf6; }
-        .class-card.type-Lecture::before { background: #3b82f6; }
-        .class-card.type-Seminar::before { background: #f97316; }
+        /* Color Coding based on Type */
+        .class-card.type-BST::before { background: #8b5cf6; } /* Purple */
+        .class-card.type-Lecture::before { background: #3b82f6; } /* Blue */
+        .class-card.type-Seminar::before { background: #f97316; } /* Orange */
+        .class-card.type-Exam::before { background: #ef4444; } /* Red */
 
         .time-col { 
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -365,6 +367,16 @@
             <div class="sheet-body">
                 <input type="hidden" id="editId">
                 <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select id="inpType" class="form-select">
+                        <option value="Lecture">Lecture</option>
+                        <option value="BST">BST (Bedside Teaching)</option>
+                        <option value="Seminar">Seminar</option>
+                        <option value="Exam">Exam / Test</option>
+                        <option value="Custom">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label class="form-label">Title</label>
                     <input type="text" id="inpTitle" class="form-input" placeholder="e.g. Cardio BST">
                 </div>
@@ -505,10 +517,8 @@
         }
 
         // --- SORTING HELPER ---
-        // Converts "09:00 AM" to 540 (minutes) and "01:30 PM" to 810 (minutes)
         function getMinutes(timeStr) {
             if (!timeStr) return 9999;
-            // Handle "09:00 AM - 10:00 AM" -> take "09:00 AM"
             let startPart = timeStr.split('-')[0].trim(); 
             if(startPart.toUpperCase().includes('TBC')) return 9999;
 
@@ -528,10 +538,8 @@
             const container = document.getElementById('scheduleContainer');
             container.innerHTML = '';
             
-            // 1. Filter by week
             let weekEvents = allEvents.filter(e => e.week == currentWeek);
             
-            // 2. SORT CHRONOLOGICALLY (Fixes the 1:30PM before 9:00AM issue)
             weekEvents.sort((a, b) => {
                 if (a.date !== b.date) return a.date.localeCompare(b.date);
                 return getMinutes(a.time) - getMinutes(b.time);
@@ -707,6 +715,7 @@
             if(isEdit) {
                 const ev = allEvents.find(e => e.id === currentDetailId);
                 document.getElementById('editId').value = ev.id;
+                document.getElementById('inpType').value = ev.type || "Lecture"; // NEW: Load Type
                 document.getElementById('inpTitle').value = ev.title;
                 document.getElementById('inpDate').value = ev.date;
                 if(ev.time) {
@@ -730,6 +739,7 @@
                 }
             } else {
                 document.getElementById('editId').value = "";
+                document.getElementById('inpType').value = "Lecture"; // Default Type
                 document.getElementById('inpTitle').value = "";
                 document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
                 document.getElementById('inpStartTime').value = "09:00"; 
@@ -770,7 +780,7 @@
                 venue: document.getElementById('inpVenue').value,
                 notes: document.getElementById('inpNotes').value,
                 week: document.getElementById('inpWeek').value,
-                type: "Custom"
+                type: document.getElementById('inpType').value // NEW: Save the selected type
             };
             if(id) await scheduleRef.doc(id).update(data);
             else await scheduleRef.add(data);
