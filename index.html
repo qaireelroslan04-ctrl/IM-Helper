@@ -1,689 +1,262 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Group B Timetable</title>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Medicine Schedule</title>
     <style>
-        /* --- 1. CSS VARIABLES (Based on Surgical Helper) --- */
         :root {
-            --bg-body: #000000;
-            --bg-sidebar: #050505;
-            --bg-card: #0a0a0a;
-            --bg-box: #111111;
-            --bg-input: #171717;
-            --border-color: #27272a;
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-            --accent-color: #3b82f6;
-            --accent-bg: #172554;
-            --accent-text: #bfdbfe;
-            --header-bg: rgba(0, 0, 0, 0.85);
-            --shadow-card: none;
-            
-            /* Status Colors */
-            --status-green: #059669;
-            --status-red: #dc2626;
-            --status-yellow: #d97706;
+            --primary-color: #0d47a1; /* Deep Blue for Medicine */
+            --header-height: 60px;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-dark: #333;
+            --text-light: #666;
+            --divider-color: #e0e0e0;
         }
 
-        [data-theme="light"] {
-            --bg-body: #f0f4f8;
-            --bg-sidebar: #ffffff;
-            --bg-card: #ffffff;
-            --bg-box: #f8fafc;
-            --bg-input: #f1f5f9;
-            --border-color: #e2e8f0;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --accent-color: #0284c7;
-            --accent-bg: #e0f2fe;
-            --accent-text: #0c4a6e;
-            --header-bg: rgba(255, 255, 255, 0.95);
-            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        
-        body {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: background-color 0.3s;
         }
 
-        /* --- HEADER --- */
-        header {
-            background-color: var(--header-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 0 1.5rem;
-            height: 60px;
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            padding-top: var(--header-height); /* Space for fixed header */
+            padding-bottom: 40px;
+        }
+
+        /* --- FIXED TOP HEADER --- */
+        .main-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--header-height);
+            background-color: var(--primary-color);
+            color: white;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            z-index: 50;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* --- SCHEDULE CONTAINER --- */
+        .schedule-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* --- DAY SECTION --- */
+        .day-section {
+            background-color: var(--card-bg);
+            margin-bottom: 10px;
+            /* Visual distinction between days */
+            border-bottom: 8px solid var(--bg-color); 
+        }
+
+        .day-header {
+            padding: 15px 20px;
+            background-color: #fff;
+            border-bottom: 1px solid var(--divider-color);
+            /* NO position: sticky here anymore */
+        }
+
+        .day-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .date-sub {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        /* --- EVENTS LIST --- */
+        .event-list {
+            list-style: none;
+        }
+
+        .event-item {
+            display: flex;
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .event-item:last-child {
+            border-bottom: none;
+        }
+
+        .event-time {
+            width: 70px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-dark);
             flex-shrink: 0;
         }
 
-        .header-left { display: flex; align-items: center; gap: 1rem; flex: 1; overflow: hidden; }
-        .menu-toggle { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; display: none; }
-        .app-title { font-size: 1.25rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; }
-        .week-badge { 
-            font-size: 0.75rem; background: var(--bg-input); padding: 2px 8px; 
-            border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted);
-            text-transform: uppercase; font-weight: 700;
-        }
-        
-        .theme-toggle {
-            background: none; border: 1px solid var(--border-color); color: var(--text-main);
-            cursor: pointer; padding: 0.5rem; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
-        }
-        .theme-toggle svg { width: 20px; height: 20px; fill: currentColor; }
-
-        /* --- LAYOUT --- */
-        .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
-
-        /* Sidebar (Week Nav) */
-        aside {
-            width: 300px; background: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
-            display: flex; flex-direction: column;
-            overflow-y: auto; z-index: 40;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .event-details {
+            flex-grow: 1;
         }
 
-        .nav-header { 
-            padding: 1.5rem; font-size: 0.75rem; text-transform: uppercase; 
-            letter-spacing: 0.1em; color: var(--text-muted); font-weight: 800;
-            border-bottom: 1px solid var(--border-color);
+        .event-title {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 4px;
         }
 
-        .nav-item {
-            padding: 1rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color);
-            transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;
-        }
-        .nav-item:hover { background: var(--bg-input); }
-        .nav-item.active { background: var(--accent-bg); border-left: 4px solid var(--accent-color); }
-        .nav-item .nav-title { font-weight: 600; font-size: 0.95rem; }
-        .nav-item .nav-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-
-        /* Main Content (Timetable) */
-        main {
-            flex: 1; overflow-y: auto; padding: 1rem;
-            scroll-behavior: smooth; position: relative;
+        .event-location {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        /* Day Group */
-        .day-group { margin-bottom: 2rem; scroll-margin-top: 80px; } /* scroll-margin for sticky header offset */
-        .day-header {
-            position: sticky; top: 0; background: var(--bg-body); z-index: 10;
-            padding: 1rem 0 0.5rem 0; margin-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex; align-items: baseline; gap: 0.5rem;
-        }
-        .day-name { font-size: 1.5rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; }
-        .day-date { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
-        .today-badge {
-            background: var(--accent-color); color: white; font-size: 0.6rem; 
-            padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;
-            vertical-align: middle; margin-left: 8px;
+        /* --- NEXT WEEK BUTTON --- */
+        .load-more-container {
+            text-align: center;
+            padding: 30px 20px;
         }
 
-        /* Class Card */
-        .class-card {
-            background: var(--bg-card); border: 1px solid var(--border-color);
-            border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem;
-            cursor: pointer; transition: transform 0.2s, border-color 0.2s;
-            position: relative; overflow: hidden;
-            display: flex; gap: 1rem;
-        }
-        .class-card:hover { transform: translateY(-2px); border-color: var(--accent-color); }
-        .class-card::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-            background: var(--border-color);
-        }
-        .class-card.type-BST::before { background: #8b5cf6; }
-        .class-card.type-Lecture::before { background: #3b82f6; }
-        .class-card.type-Seminar::before { background: #f97316; }
-
-        .time-col { 
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            min-width: 60px; padding-right: 1rem; border-right: 1px solid var(--border-color);
-        }
-        .time-start { font-weight: 800; font-size: 1rem; color: var(--text-main); }
-        .time-ampm { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-
-        .info-col { flex: 1; }
-        .card-type { 
-            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; 
-            font-weight: 700; margin-bottom: 0.25rem; display: inline-block;
-            padding: 2px 6px; border-radius: 4px; background: var(--bg-input); color: var(--text-muted);
-        }
-        .card-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem; line-height: 1.2; }
-        .card-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
-        
-        /* TBC Alert */
-        .tbc-alert { color: var(--status-yellow); font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
-
-        /* --- DETAILS MODAL --- */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100;
-            backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity 0.2s;
-        }
-        .modal-overlay.active { display: flex; opacity: 1; }
-
-        .detail-sheet {
-            background: var(--bg-card); width: 100%; max-width: 600px; height: 85vh;
-            border-radius: 1.5rem 1.5rem 0 0; position: absolute; bottom: 0;
-            display: flex; flex-direction: column; overflow: hidden;
-            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            border: 1px solid var(--border-color); border-bottom: none;
-        }
-        @media(min-width: 768px) {
-            .detail-sheet { height: auto; max-height: 85vh; border-radius: 1.5rem; position: relative; transform: scale(0.95); opacity: 0; }
-            .modal-overlay.active .detail-sheet { transform: scale(1); opacity: 1; }
-        }
-        .modal-overlay.active .detail-sheet { transform: translateY(0); }
-
-        .sheet-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: start; background: var(--bg-box); }
-        .sheet-close { background: var(--bg-input); border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-
-        .sheet-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
-        
-        .detail-row { margin-bottom: 1.5rem; }
-        .detail-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-color); font-weight: 700; margin-bottom: 0.5rem; }
-        .detail-value { font-size: 1.1rem; color: var(--text-main); line-height: 1.4; }
-        .detail-note { background: var(--bg-input); padding: 1rem; border-radius: 0.5rem; border-left: 3px solid var(--accent-color); font-size: 0.95rem; }
-
-        /* --- ADMIN FAB --- */
-        .fab {
-            position: fixed; bottom: 2rem; right: 2rem; width: 56px; height: 56px;
-            background: var(--accent-color); color: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 90;
-            font-size: 1.5rem; transition: transform 0.2s;
-        }
-        .fab:hover { transform: scale(1.1); }
-
-        /* --- MOBILE RESPONSIVENESS --- */
-        .backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 35; }
-        @media (max-width: 768px) {
-            .menu-toggle { display: block; }
-            aside { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-            aside.open { transform: translateX(0); }
-            .backdrop.open { display: block; }
-            .time-col { min-width: 50px; padding-right: 0.75rem; }
-            .time-start { font-size: 0.9rem; }
+        .next-week-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(13, 71, 161, 0.2);
+            transition: transform 0.2s, background-color 0.2s;
         }
 
-        /* --- FORM STYLES --- */
-        .form-group { margin-bottom: 1rem; }
-        .form-label { display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted); }
-        .form-input, .form-select { 
-            width: 100%; padding: 0.8rem; background: var(--bg-input); 
-            border: 1px solid var(--border-color); color: var(--text-main); 
-            border-radius: 0.5rem; font-size: 1rem; outline: none; 
+        .next-week-btn:active {
+            transform: scale(0.98);
+            background-color: #0a3b8c;
         }
-        .form-input:focus, .form-select:focus { border-color: var(--accent-color); }
-        .btn { padding: 0.8rem 1.5rem; border-radius: 0.5rem; font-weight: 700; border: none; cursor: pointer; width: 100%; margin-top: 1rem; }
-        .btn-primary { background: var(--accent-color); color: white; }
-        .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; margin-top: 0.5rem; }
-        
-        .hidden { display: none; }
+
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="header-left">
-            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-            <h1 class="app-title">Group B</h1>
-            <span class="week-badge" id="currentWeekBadge">Week 1</span>
-        </div>
-        <button class="theme-toggle" onclick="toggleTheme()">
-            <svg id="sun-icon" style="display:none" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"></path></svg>
-            <svg id="moon-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"></path></svg>
-        </button>
+    <header class="main-header" id="mainHeader">
+        Internal Medicine
     </header>
 
-    <div class="main-container">
-        <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
+    <div class="schedule-container" id="scheduleContainer">
         
-        <aside id="sidebar">
-            <div class="nav-header">Select Week</div>
-            <div id="weekList">
-                </div>
-            <div style="padding: 1rem;">
-                <button onclick="adminLogin()" id="adminBtn" class="btn btn-primary" style="background: var(--bg-input); color: var(--text-muted); font-size: 0.8rem;">Admin Login</button>
-                <button onclick="cleanDB()" id="cleanBtn" class="hidden btn btn-danger" style="font-size: 0.8rem;">Reset Database</button>
+        <div class="day-section">
+            <div class="day-header">
+                <div class="day-title">Monday</div>
+                <div class="date-sub">December 22</div>
             </div>
-        </aside>
-
-        <main id="scheduleContainer">
-            <div style="text-align: center; padding-top: 5rem; color: var(--text-muted);">
-                <div class="loader" style="margin: 0 auto 1rem auto; width: 30px; height: 30px; border: 3px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                Loading Schedule...
-            </div>
-        </main>
-    </div>
-
-    <div id="fabBtn" class="fab hidden" onclick="openEditModal()">+</div>
-
-    <div id="detailModal" class="modal-overlay">
-        <div class="detail-sheet">
-            <div class="sheet-header">
-                <div>
-                    <span class="card-type" id="detailType">LECTURE</span>
-                    <h2 style="margin-top: 0.5rem; font-size: 1.5rem;" id="detailTitle">Class Title</h2>
-                </div>
-                <button class="sheet-close" onclick="closeModal('detailModal')">×</button>
-            </div>
-            <div class="sheet-body">
-                <div class="detail-row">
-                    <div class="detail-label">Time & Date</div>
-                    <div class="detail-value" id="detailTime">09:00 AM • Mon, 22 Dec</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Lecturer</div>
-                    <div class="detail-value" id="detailLecturer">Dr. Affizal</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Venue</div>
-                    <div class="detail-value" id="detailVenue">Online</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Notes</div>
-                    <div class="detail-note" id="detailNotes">No additional notes provided.</div>
-                </div>
-                
-                <button id="editBtn" class="hidden btn btn-primary" onclick="editCurrentClass()">Edit Class</button>
-            </div>
+            <ul class="event-list">
+                <li class="event-item">
+                    <div class="event-time">08:00</div>
+                    <div class="event-details">
+                        <div class="event-title">Ward Rounds</div>
+                        <div class="event-location">General Ward 3</div>
+                    </div>
+                </li>
+                <li class="event-item">
+                    <div class="event-time">10:30</div>
+                    <div class="event-details">
+                        <div class="event-title">Morning Teaching</div>
+                        <div class="event-location">Seminar Room 1</div>
+                    </div>
+                </li>
+                <li class="event-item">
+                    <div class="event-time">14:00</div>
+                    <div class="event-details">
+                        <div class="event-title">Clinic Observation</div>
+                        <div class="event-location">OPD Clinic</div>
+                    </div>
+                </li>
+            </ul>
         </div>
-    </div>
 
-    <div id="editModal" class="modal-overlay">
-        <div class="detail-sheet">
-            <div class="sheet-header">
-                <h2>Manage Class</h2>
-                <button class="sheet-close" onclick="closeModal('editModal')">×</button>
+        <div class="day-section">
+            <div class="day-header">
+                <div class="day-title">Tuesday</div>
+                <div class="date-sub">December 23</div>
             </div>
-            <div class="sheet-body">
-                <input type="hidden" id="editId">
-                
-                <div class="form-group">
-                    <label class="form-label">Title</label>
-                    <input type="text" id="inpTitle" class="form-input" placeholder="e.g. Cardio BST">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Lecturer</label>
-                    <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()">
-                        <option value="">Select Lecturer...</option>
-                        </select>
-                    <input type="text" id="inpLecturerText" class="form-input hidden" placeholder="Enter Name..." style="margin-top: 0.5rem;">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Date</label>
-                    <input type="date" id="inpDate" class="form-input">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Time</label>
-                    <input type="text" id="inpTime" class="form-input" placeholder="09:00 AM">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Venue</label>
-                    <input type="text" id="inpVenue" class="form-input" placeholder="e.g. Ward 2A / Zoom">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Notes (Optional)</label>
-                    <textarea id="inpNotes" class="form-input" rows="3" placeholder="e.g. Bring logbook"></textarea>
-                </div>
-                
-                <div class="form-group">
-                     <label class="form-label">Week</label>
-                     <select id="inpWeek" class="form-select">
-                         <option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option>
-                         <option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option>
-                         <option value="7">Week 7</option><option value="8">Week 8</option>
-                     </select>
-                </div>
-
-                <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
-                <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Class</button>
-            </div>
+            <ul class="event-list">
+                <li class="event-item">
+                    <div class="event-time">07:30</div>
+                    <div class="event-details">
+                        <div class="event-title">Grand Rounds</div>
+                        <div class="event-location">Auditorium</div>
+                    </div>
+                </li>
+                <li class="event-item">
+                    <div class="event-time">11:00</div>
+                    <div class="event-details">
+                        <div class="event-title">Bedside Teaching</div>
+                        <div class="event-location">Ward 5B</div>
+                    </div>
+                </li>
+            </ul>
         </div>
+
+        <div class="day-section">
+            <div class="day-header">
+                <div class="day-title">Wednesday</div>
+                <div class="date-sub">December 24</div>
+            </div>
+            <ul class="event-list">
+                <li class="event-item">
+                    <div class="event-time">09:00</div>
+                    <div class="event-details">
+                        <div class="event-title">Case Presentation</div>
+                        <div class="event-location">Meeting Room 2</div>
+                    </div>
+                </li>
+                <li class="event-item">
+                    <div class="event-time">14:00</div>
+                    <div class="event-details">
+                        <div class="event-title">Self Study / Logbook</div>
+                        <div class="event-location">Library</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="load-more-container">
+            <button class="next-week-btn" onclick="loadNextWeek()">Load Next Week →</button>
+        </div>
+
     </div>
 
     <script>
-        // --- 1. CONFIG & INIT ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBd9E9VkE7bllIN13NYGz801F4Jue_VzVk",
-            authDomain: "im-helper-d3a4a.firebaseapp.com",
-            projectId: "im-helper-d3a4a",
-            storageBucket: "im-helper-d3a4a.firebasestorage.app",
-            messagingSenderId: "772636018512",
-            appId: "1:772636018512:web:b14c28259606e18d6f4e55"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        db.settings({ experimentalForceLongPolling: true });
-        const scheduleRef = db.collection("schedule_group_b");
-
-        // --- 2. DATA ---
-        const lecturers = [
-            "Dr Affizal Samsudin", "Prof Dr Asri B Said", "AP Dr Chai Chee Shee", "AP Dr Ling Hwei Sung",
-            "Prof Dr Henry Gudum", "AP Dr Loh Huai Heng", "AP Dr Sim Chun Yang", "Dr Chow Han Bing",
-            "Dr Chan En Ze", "Dr Yeoh Cheng Wooi", "AP Dr Diana Ng", "AP Dr Sim Sing Yee", 
-            "Prof Dr Kuan Jew Win", "Dr Joshua Chung", "Dr Frederick De Rozario", "Other"
-        ];
-
-        let allEvents = [];
-        let currentWeek = 1;
-        let isAdmin = false;
-
-        // --- 3. THEME & UI ---
-        function initTheme() {
-            const saved = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', saved);
-            document.getElementById('sun-icon').style.display = saved === 'light' ? 'block' : 'none';
-            document.getElementById('moon-icon').style.display = saved === 'dark' ? 'block' : 'none';
-        }
-        function toggleTheme() {
-            const current = document.documentElement.getAttribute('data-theme');
-            const next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-            initTheme();
-        }
-        initTheme();
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('backdrop').classList.toggle('open');
-        }
-
-        // --- 4. DATA LOGIC ---
-        function calculateCurrentWeek() {
-            // Start Date: Dec 22, 2025
-            const startDate = new Date('2025-12-22T00:00:00');
-            const today = new Date();
-            const diffTime = Math.abs(today - startDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        // Simple logic to simulate loading more days
+        function loadNextWeek() {
+            const btn = document.querySelector('.next-week-btn');
+            btn.textContent = "Loading...";
             
-            // If before start date
-            if (today < startDate) return 1;
-            
-            const weekNum = Math.ceil(diffDays / 7);
-            return weekNum > 8 ? 8 : weekNum;
-        }
-
-        scheduleRef.orderBy("date").orderBy("time").onSnapshot(snapshot => {
-            allEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderSidebarNav();
-            renderSchedule();
-        });
-
-        // --- 5. RENDER SIDEBAR ---
-        function renderSidebarNav() {
-            const list = document.getElementById('weekList');
-            list.innerHTML = '';
-            
-            // Date ranges for weeks (Start Dec 22)
-            const start = new Date('2025-12-22');
-            
-            for(let i=1; i<=8; i++) {
-                const wStart = new Date(start);
-                wStart.setDate(start.getDate() + (i-1)*7);
-                const wEnd = new Date(wStart);
-                wEnd.setDate(wStart.getDate() + 6);
-                
-                const format = d => `${d.getDate()}/${d.getMonth()+1}`;
-                
-                const div = document.createElement('div');
-                div.className = `nav-item ${i === currentWeek ? 'active' : ''}`;
-                div.onclick = () => { currentWeek = i; renderSidebarNav(); renderSchedule(); toggleSidebar(); };
-                div.innerHTML = `
-                    <div>
-                        <div class="nav-title">Week ${i}</div>
-                        <div class="nav-sub">${format(wStart)} - ${format(wEnd)}</div>
-                    </div>
-                    ${i === currentWeek ? '<div>•</div>' : ''}
-                `;
-                list.appendChild(div);
-            }
-            document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
-        }
-
-        // --- 6. RENDER SCHEDULE (MAIN) ---
-        function renderSchedule() {
-            const container = document.getElementById('scheduleContainer');
-            container.innerHTML = '';
-
-            const weekEvents = allEvents.filter(e => e.week == currentWeek);
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            if(weekEvents.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding: 4rem; color: var(--text-muted);">No classes scheduled for Week ${currentWeek}.</div>`;
-                return;
-            }
-
-            // Group by Date
-            const grouped = {};
-            weekEvents.forEach(e => {
-                if(!grouped[e.date]) grouped[e.date] = [];
-                grouped[e.date].push(e);
-            });
-
-            Object.keys(grouped).sort().forEach(date => {
-                const dateObj = new Date(date);
-                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-                const datePretty = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-                const isToday = date === todayStr;
-
-                const dayBlock = document.createElement('div');
-                dayBlock.className = 'day-group';
-                if(isToday) dayBlock.id = "todayMarker"; // Anchor for scroll
-
-                let headerHTML = `
-                    <div class="day-header">
-                        <span class="day-name">${dayName}</span>
-                        <span class="day-date">${datePretty}</span>
-                        ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
-                    </div>
-                `;
-                
-                let cardsHTML = '';
-                grouped[date].forEach(ev => {
-                    const isTBC = ev.time.includes('TBC') || ev.venue.includes('TBC');
-                    const timeParts = ev.time.split(' '); // "09:00 AM" -> ["09:00", "AM"]
-                    
-                    cardsHTML += `
-                        <div class="class-card type-${ev.type || 'Custom'}" onclick="openDetail('${ev.id}')">
-                            <div class="time-col">
-                                <span class="time-start">${timeParts[0] || ev.time}</span>
-                                <span class="time-ampm">${timeParts[1] || ''}</span>
-                            </div>
-                            <div class="info-col">
-                                <span class="card-type">${ev.type || 'Session'}</span>
-                                <div class="card-title">${ev.title}</div>
-                                <div class="card-meta">
-                                    <span>${ev.lecturer}</span> • <span>${ev.venue}</span>
-                                </div>
-                                ${isTBC ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-
-                dayBlock.innerHTML = headerHTML + cardsHTML;
-                container.appendChild(dayBlock);
-            });
-
-            // Scroll to Today if in view
             setTimeout(() => {
-                const el = document.getElementById('todayMarker');
-                if(el) el.scrollIntoView({behavior: "smooth", block: "center"});
+                // In a real app, you would fetch data here.
+                // For this demo, we will just alert.
+                alert("This would load the schedule for the following week.");
+                btn.textContent = "Load Next Week →";
+                
+                // Optional: smooth scroll to the new content
             }, 500);
         }
 
-        // --- 7. DETAILS & MODALS ---
-        let currentDetailId = null;
-
-        function openDetail(id) {
-            currentDetailId = id;
-            const ev = allEvents.find(e => e.id === id);
-            
-            document.getElementById('detailType').innerText = ev.type || 'SESSION';
-            document.getElementById('detailTitle').innerText = ev.title;
-            document.getElementById('detailTime').innerText = `${ev.time} • ${ev.date}`;
-            document.getElementById('detailLecturer').innerText = ev.lecturer;
-            document.getElementById('detailVenue').innerText = ev.venue;
-            document.getElementById('detailNotes').innerText = ev.notes || "No additional notes provided.";
-            
-            document.getElementById('detailModal').classList.add('active');
-            
-            if(isAdmin) document.getElementById('editBtn').classList.remove('hidden');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        // --- 8. ADMIN FUNCTIONS ---
-        function adminLogin() {
-            if(isAdmin) {
-                isAdmin = false;
-                document.getElementById('adminBtn').innerText = "Admin Login";
-                document.getElementById('fabBtn').classList.add('hidden');
-                document.getElementById('cleanBtn').classList.add('hidden');
-                alert("Logged out.");
-            } else {
-                const pass = prompt("Passcode:");
-                if(pass === "admin123") {
-                    isAdmin = true;
-                    document.getElementById('adminBtn').innerText = "Logout";
-                    document.getElementById('fabBtn').classList.remove('hidden');
-                    document.getElementById('cleanBtn').classList.remove('hidden');
-                    renderSchedule(); // re-render to potentially show admin cues if added
-                } else { alert("Wrong."); }
-            }
-        }
-
-        function openEditModal(isEdit = false) {
-            // Populate Lecturer Select
-            const sel = document.getElementById('inpLecturerSelect');
-            sel.innerHTML = '<option value="">Select Lecturer...</option>';
-            lecturers.forEach(l => {
-                sel.innerHTML += `<option value="${l}">${l}</option>`;
-            });
-
-            if(isEdit) {
-                const ev = allEvents.find(e => e.id === currentDetailId);
-                document.getElementById('editId').value = ev.id;
-                document.getElementById('inpTitle').value = ev.title;
-                document.getElementById('inpDate').value = ev.date;
-                document.getElementById('inpTime').value = ev.time;
-                document.getElementById('inpVenue').value = ev.venue;
-                document.getElementById('inpNotes').value = ev.notes || "";
-                document.getElementById('inpWeek').value = ev.week;
-                document.getElementById('btnDelete').classList.remove('hidden');
-                
-                // Handle Lecturer Logic
-                if(lecturers.includes(ev.lecturer)) {
-                    sel.value = ev.lecturer;
-                    document.getElementById('inpLecturerText').classList.add('hidden');
-                } else {
-                    sel.value = "Other";
-                    document.getElementById('inpLecturerText').classList.remove('hidden');
-                    document.getElementById('inpLecturerText').value = ev.lecturer;
-                }
-            } else {
-                document.getElementById('editId').value = "";
-                document.getElementById('inpTitle').value = "";
-                document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('inpTime').value = "09:00 AM";
-                document.getElementById('inpVenue').value = "TBC";
-                document.getElementById('inpNotes').value = "";
-                document.getElementById('inpWeek').value = currentWeek;
-                document.getElementById('btnDelete').classList.add('hidden');
-            }
-            
-            closeModal('detailModal');
-            document.getElementById('editModal').classList.add('active');
-        }
-
-        function checkLecturerSelect() {
-            const val = document.getElementById('inpLecturerSelect').value;
-            const txt = document.getElementById('inpLecturerText');
-            if(val === "Other") txt.classList.remove('hidden');
-            else txt.classList.add('hidden');
-        }
-
-        function editCurrentClass() { openEditModal(true); }
-
-        async function saveClass() {
-            const id = document.getElementById('editId').value;
-            let lect = document.getElementById('inpLecturerSelect').value;
-            if(lect === "Other") lect = document.getElementById('inpLecturerText').value;
-
-            const data = {
-                title: document.getElementById('inpTitle').value,
-                lecturer: lect,
-                date: document.getElementById('inpDate').value,
-                time: document.getElementById('inpTime').value,
-                venue: document.getElementById('inpVenue').value,
-                notes: document.getElementById('inpNotes').value,
-                week: document.getElementById('inpWeek').value,
-                type: "Custom"
-            };
-
-            if(id) await scheduleRef.doc(id).update(data);
-            else await scheduleRef.add(data);
-            
-            closeModal('editModal');
-        }
-
-        async function deleteClass() {
-            if(confirm("Delete this session?")) {
-                const id = document.getElementById('editId').value;
-                await scheduleRef.doc(id).delete();
-                closeModal('editModal');
-            }
-        }
-
-        // --- INIT ---
-        currentWeek = calculateCurrentWeek();
-        renderSidebarNav();
-        
-        // Seed Clean Function (Hidden)
-        const seedData = [ /* Copied from previous logic if needed for reset */ ];
-        async function cleanDB() {
-             if(!confirm("RESET DATABASE? This deletes all data.")) return;
-             // ... logic to clear and re-seed ...
-             alert("Database reset function placeholder.");
-        }
-
-        // Animation for loader
-        const styleSheet = document.createElement("style");
-        styleSheet.innerText = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
-        document.head.appendChild(styleSheet);
-
+        // Optional: Dynamic Header Logic
+        // If you want the header to change text to "Internal Medicine - [Current Visible Date]" 
+        // we can add an IntersectionObserver here. 
+        // Currently, per instructions, it just stays as "Internal Medicine" fixed at top.
     </script>
 </body>
 </html>
