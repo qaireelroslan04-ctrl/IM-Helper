@@ -276,6 +276,19 @@
         .btn-primary { background: var(--accent-color); color: white; }
         .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; margin-top: 0.5rem; }
         .hidden { display: none; }
+        
+        /* New Time Row Style */
+        .time-row { display: flex; gap: 10px; }
+        .time-block { flex: 1; }
+        /* Style the time picker specifically */
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+        [data-theme="light"] input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(0);
+        }
+
     </style>
 </head>
 <body>
@@ -372,10 +385,18 @@
                     <label class="form-label">Date</label>
                     <input type="date" id="inpDate" class="form-input">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Time</label>
-                    <input type="text" id="inpTime" class="form-input" placeholder="09:00 AM">
+                
+                <div class="form-group time-row">
+                    <div class="time-block">
+                        <label class="form-label">Start Time</label>
+                        <input type="time" id="inpStartTime" class="form-input" required>
+                    </div>
+                    <div class="time-block">
+                        <label class="form-label">End Time</label>
+                        <input type="time" id="inpEndTime" class="form-input" required>
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">Venue</label>
                     <input type="text" id="inpVenue" class="form-input" placeholder="e.g. Ward 2A / Zoom">
@@ -530,7 +551,8 @@
                 let cardsHTML = '';
                 grouped[date].forEach(ev => {
                     const isTBC = ev.time.includes('TBC') || ev.venue.includes('TBC');
-                    const timeParts = ev.time.split(' '); 
+                    // Ensure split works even if time doesn't have a space
+                    const timeParts = ev.time ? ev.time.split(' ') : ["TBC", ""]; 
                     cardsHTML += `
                         <div class="class-card type-${ev.type || 'Custom'}" onclick="openDetail('${ev.id}')">
                             <div class="time-col">
@@ -610,6 +632,33 @@
         }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
 
+        // --- TIME HELPER FUNCTIONS ---
+        // Converts "14:00" to "2:00 PM"
+        function convertTo12Hour(timeStr) {
+            if(!timeStr) return "";
+            let [h, m] = timeStr.split(':');
+            h = parseInt(h);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            h = h ? h : 12; 
+            return `${h}:${m} ${ampm}`;
+        }
+
+        // Converts "2:00 PM" or "02:00 PM" back to "14:00" for the input
+        function convertTo24Hour(timeStr) {
+            if(!timeStr) return "";
+            // Handle simple "9:00 AM" format
+            const [time, modifier] = timeStr.split(' ');
+            if(!time || !modifier) return "";
+            
+            let [hours, minutes] = time.split(':');
+            if (hours === '12') hours = '00';
+            if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+            
+            // Pad numbers with leading zero (e.g., 9 -> 09)
+            return `${String(hours).padStart(2, '0')}:${minutes}`;
+        }
+
         // --- ADMIN ---
         function adminLogin() {
             if(isAdmin) {
@@ -635,7 +684,7 @@
         }
 
         function openEditModal(isEdit = false) {
-            checkSidebar(); // NEW: Close sidebar if open
+            checkSidebar(); 
             const sel = document.getElementById('inpLecturerSelect');
             sel.innerHTML = '<option value="">Select Lecturer...</option>';
             lecturers.forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
@@ -645,7 +694,18 @@
                 document.getElementById('editId').value = ev.id;
                 document.getElementById('inpTitle').value = ev.title;
                 document.getElementById('inpDate').value = ev.date;
-                document.getElementById('inpTime').value = ev.time;
+                
+                // Parse existing time string (e.g. "09:00 AM - 10:00 AM")
+                if(ev.time) {
+                    const parts = ev.time.split(' - ');
+                    // Try to convert "09:00 AM" -> "09:00"
+                    document.getElementById('inpStartTime').value = convertTo24Hour(parts[0]);
+                    // If there is a second part, convert it too
+                    if(parts[1]) {
+                        document.getElementById('inpEndTime').value = convertTo24Hour(parts[1]);
+                    }
+                }
+
                 document.getElementById('inpVenue').value = ev.venue;
                 document.getElementById('inpNotes').value = ev.notes || "";
                 document.getElementById('inpWeek').value = ev.week;
@@ -662,7 +722,8 @@
                 document.getElementById('editId').value = "";
                 document.getElementById('inpTitle').value = "";
                 document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('inpTime').value = "09:00 AM";
+                document.getElementById('inpStartTime').value = "09:00"; // Default start
+                document.getElementById('inpEndTime').value = "10:00";   // Default end
                 document.getElementById('inpVenue').value = "TBC";
                 document.getElementById('inpNotes').value = "";
                 document.getElementById('inpWeek').value = currentWeek;
@@ -671,6 +732,7 @@
             closeModal('detailModal');
             document.getElementById('editModal').classList.add('active');
         }
+
         function checkLecturerSelect() {
             const val = document.getElementById('inpLecturerSelect').value;
             const txt = document.getElementById('inpLecturerText');
@@ -678,15 +740,26 @@
             else txt.classList.add('hidden');
         }
         function editCurrentClass() { openEditModal(true); }
+        
         async function saveClass() {
             const id = document.getElementById('editId').value;
             let lect = document.getElementById('inpLecturerSelect').value;
             if(lect === "Other") lect = document.getElementById('inpLecturerText').value;
+            
+            // CONVERT TIME PICKER BACK TO STRING
+            const start24 = document.getElementById('inpStartTime').value;
+            const end24 = document.getElementById('inpEndTime').value;
+            const start12 = convertTo12Hour(start24);
+            const end12 = convertTo12Hour(end24);
+            
+            // Format: "09:00 AM - 10:00 AM"
+            const finalTime = `${start12} - ${end12}`;
+
             const data = {
                 title: document.getElementById('inpTitle').value,
                 lecturer: lect,
                 date: document.getElementById('inpDate').value,
-                time: document.getElementById('inpTime').value,
+                time: finalTime, // Saving the combined string
                 venue: document.getElementById('inpVenue').value,
                 notes: document.getElementById('inpNotes').value,
                 week: document.getElementById('inpWeek').value,
@@ -696,6 +769,7 @@
             else await scheduleRef.add(data);
             closeModal('editModal');
         }
+
         async function deleteClass() {
             if(confirm("Delete this session?")) {
                 const id = document.getElementById('editId').value;
