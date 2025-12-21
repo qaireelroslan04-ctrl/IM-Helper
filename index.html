@@ -113,7 +113,7 @@
             flex-shrink: 0; 
         }
 
-        /* NEW TOGGLE BUTTONS */
+        /* SIDEBAR TOGGLE BUTTONS */
         .view-toggle {
             display: flex;
             background: var(--bg-input);
@@ -616,17 +616,13 @@
             document.getElementById('btnViewWeek').classList.toggle('active', mode === 'week');
             document.getElementById('btnViewLecturer').classList.toggle('active', mode === 'lecturer');
             
-            // If switching to lecturer mode and no lecturer selected, pick first one or just render list
-            if (mode === 'lecturer' && !currentLecturer) {
-                 // We wait for user to pick from sidebar
-            }
             renderSidebarNav();
-            // If in lecturer mode, only render schedule if we have a selection, else maybe clear or show instructions
-            // For simplicity, if we switch, we stay on current view until clicked
-            // But usually we want to see the list.
-            if(mode === 'week') renderSchedule(); 
-            else if(currentLecturer) renderSchedule(); // Keep showing current lecturer if exists
-            else document.getElementById('scheduleContainer').innerHTML = '<div style="text-align:center; padding: 4rem; color: var(--text-muted);">Select a Lecturer from the menu.</div>';
+            // If switching to lecturer mode and no lecturer selected yet, clear schedule or prompt
+            if (mode === 'lecturer' && !currentLecturer) {
+                 document.getElementById('scheduleContainer').innerHTML = '<div style="text-align:center; padding: 4rem; color: var(--text-muted);">Select a Lecturer from the menu.</div>';
+            } else {
+                renderSchedule();
+            }
         }
 
         // --- DATA LOGIC ---
@@ -805,6 +801,26 @@
             document.getElementById('scheduleContainer').scrollTop = 0;
         }
 
+        // --- HEADER SCROLL LOGIC ---
+        const mainTitle = document.getElementById('mainHeaderTitle');
+        const scrollContainer = document.getElementById('scheduleContainer');
+
+        scrollContainer.addEventListener('scroll', () => {
+            const groups = document.querySelectorAll('.day-group');
+            let found = false;
+            for (const group of groups) {
+                const rect = group.getBoundingClientRect();
+                if (rect.top <= 120 && rect.bottom > 60) {
+                    mainTitle.innerText = group.dataset.dayName; 
+                    found = true;
+                    break;
+                }
+            }
+            if (!found || scrollContainer.scrollTop < 50) {
+                mainTitle.innerText = "Internal Medicine";
+            }
+        });
+
         // --- DETAILS ---
         let currentDetailId = null;
         function openDetail(id) {
@@ -824,12 +840,15 @@
             btnGroup.classList.add('hidden');
 
             let phone = "";
+            // Check hardcoded list first
             if (lecturerContacts[ev.lecturer]) {
                 phone = lecturerContacts[ev.lecturer];
             } else if (ev.lecturerPhone) {
+                // Then check custom saved phone
                 phone = ev.lecturerPhone;
             }
 
+            // 1. WhatsApp Lecturer Button
             if (phone) {
                 const cleanPhone = phone.replace(/[^0-9]/g, '');
                 btnGroup.innerHTML += `
@@ -841,6 +860,7 @@
                 btnGroup.classList.remove('hidden');
             }
 
+            // 2. WhatsApp Support/Related Button
             if (ev.extraPhone) {
                 const cleanExtra = ev.extraPhone.replace(/[^0-9]/g, '');
                 btnGroup.innerHTML += `
@@ -857,8 +877,27 @@
         }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
 
-        // ... (Remaining Admin/Edit/Save functions same as before) ...
-        
+        // --- TIME HELPER FUNCTIONS ---
+        function convertTo12Hour(timeStr) {
+            if(!timeStr) return "";
+            let [h, m] = timeStr.split(':');
+            h = parseInt(h);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            h = h ? h : 12; 
+            return `${h}:${m} ${ampm}`;
+        }
+
+        function convertTo24Hour(timeStr) {
+            if(!timeStr) return "";
+            const [time, modifier] = timeStr.split(' ');
+            if(!time || !modifier) return "";
+            let [hours, minutes] = time.split(':');
+            if (hours === '12') hours = '00';
+            if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+            return `${String(hours).padStart(2, '0')}:${minutes}`;
+        }
+
         // --- ADMIN ---
         function adminLogin() {
             if(isAdmin) {
