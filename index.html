@@ -6,6 +6,10 @@
     <title>Group B - MDP30209 Timetable</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
         .loader {
             border: 4px solid #f3f3f3;
@@ -28,7 +32,7 @@
                 <p class="text-xs text-blue-200">Rotation 2 • Medicine I</p>
             </div>
             <div id="statusIndicator" class="text-xs bg-blue-900 px-2 py-1 rounded-full flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-green-400"></div> Live
+                <div class="w-2 h-2 rounded-full bg-yellow-400" id="statusDot"></div> <span id="statusText">Connecting...</span>
             </div>
         </div>
     </nav>
@@ -39,8 +43,10 @@
     </div>
 
     <main class="max-w-md mx-auto p-4 pb-20">
-        <div id="loading" class="flex justify-center mt-10">
-            <div class="loader"></div>
+        <div id="loading" class="flex flex-col items-center mt-10 text-gray-400">
+            <div class="loader mb-4"></div>
+            <p>Loading schedule...</p>
+            <p class="text-xs mt-2">If stuck, check internet or database rules.</p>
         </div>
         
         <div id="scheduleContainer" class="space-y-4">
@@ -103,11 +109,8 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        // --- 1. FIREBASE CONFIG ---
+    <script>
+        // --- 1. CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyBd9E9VkE7bllIN13NYGz801F4Jue_VzVk",
             authDomain: "im-helper-d3a4a.firebaseapp.com",
@@ -118,17 +121,17 @@
             measurementId: "G-N0F30M6Q5Y"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const scheduleRef = collection(db, "schedule_group_b");
+        // Initialize Firebase (Compat mode)
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const scheduleRef = db.collection("schedule_group_b");
 
-        // --- 2. STATE MANAGEMENT ---
+        // --- 2. STATE ---
         let currentWeek = 1;
         let isAdmin = false;
         let allEvents = [];
 
-        // --- 3. SEED DATA (INITIAL UPLOAD) ---
-        // Based on the guidebook provided.
+        // --- 3. SEED DATA ---
         const seedData = [
             // WEEK 1
             { title: "Briefing & Intro", lecturer: "Dr Affizal", date: "2025-12-22", time: "09:00 AM", venue: "Online", week: 1, type: "Lecture" },
@@ -137,16 +140,14 @@
             { title: "Endocrine Intro", lecturer: "AP Dr Loh HH", date: "2025-12-23", time: "TBC (AM)", venue: "Online", week: 1, type: "Lecture" },
             { title: "Respiratory Intro", lecturer: "AP Dr Chai CS", date: "2025-12-23", time: "TBC (PM)", venue: "Online", week: 1, type: "Lecture" },
             { title: "Neurology Intro", lecturer: "AP Dr Sim CY", date: "2025-12-26", time: "TBC (AM)", venue: "Online", week: 1, type: "Lecture" },
-            
-            // WEEK 2 (Subgroup B Specifics)
+            // WEEK 2
             { title: "Cardio Lecture (LHS 2)", lecturer: "AP Dr Ling HS", date: "2025-12-29", time: "08:00 AM", venue: "TBC", week: 2, type: "Lecture" },
             { title: "BST (PJS) Session", lecturer: "AP Dr Ling HS (B LHS 4)", date: "2025-12-29", time: "TBC (AM)", venue: "PJS", week: 2, type: "BST" },
             { title: "BST (SGH) Session", lecturer: "Prof Dr Henry G (B HG 1)", date: "2025-12-30", time: "TBC (AM)", venue: "SGH", week: 2, type: "BST" },
             { title: "Combined BST (PJS)", lecturer: "Dr Chow HB (AB CHB 2)", date: "2026-01-02", time: "TBC (AM)", venue: "PJS", week: 2, type: "BST" },
             { title: "Resp Seminar", lecturer: "AP Dr Chai CS", date: "2026-01-02", time: "TBC (AM)", venue: "TBC", week: 2, type: "Seminar" },
             { title: "Resp Lecture", lecturer: "AP Dr Chai CS", date: "2026-01-02", time: "TBC (PM)", venue: "TBC", week: 2, type: "Lecture" },
-
-            // WEEK 3 (Subgroup B Specifics)
+            // WEEK 3
             { title: "BST (PJS)", lecturer: "AP Dr Loh HH (B LHH 3)", date: "2026-01-05", time: "TBC (AM)", venue: "PJS", week: 3, type: "BST" },
             { title: "Case Discussion", lecturer: "Dr Chan EZ (AB CEZ 2)", date: "2026-01-05", time: "TBC (PM)", venue: "TBC", week: 3, type: "CD" },
             { title: "BST (SGH)", lecturer: "AP Dr Loh HH (B LHH 3)", date: "2026-01-06", time: "TBC (AM)", venue: "SGH", week: 3, type: "BST" },
@@ -158,34 +159,44 @@
             { title: "Combined Case Disc", lecturer: "Dr Affizal (BE AF 5)", date: "2026-01-09", time: "TBC (PM)", venue: "TBC", week: 3, type: "CD" }
         ];
 
-        async function seedDatabase() {
-            const snapshot = await getDocs(scheduleRef);
-            if (snapshot.empty) {
-                console.log("Database empty. Seeding initial data...");
-                seedData.forEach(async (item) => {
-                    await addDoc(scheduleRef, item);
-                });
-                alert("App initialized! Default schedule loaded.");
-            }
+        function checkAndSeed() {
+            scheduleRef.get().then((snapshot) => {
+                document.getElementById('statusDot').classList.replace('bg-yellow-400', 'bg-green-400');
+                document.getElementById('statusText').innerText = "Live";
+                
+                if (snapshot.empty) {
+                    console.log("Database empty. Seeding...");
+                    const batch = db.batch();
+                    seedData.forEach((docData) => {
+                        const newRef = scheduleRef.doc();
+                        batch.set(newRef, docData);
+                    });
+                    batch.commit().then(() => alert("App Initialized with Default Schedule!"));
+                }
+            }).catch((error) => {
+                console.error("Connection Error:", error);
+                document.getElementById('statusDot').classList.replace('bg-yellow-400', 'bg-red-500');
+                document.getElementById('statusText').innerText = "Error";
+                document.getElementById('loading').innerHTML = `<p class="text-red-500">Connection Failed.</p><p class="text-xs">${error.message}</p>`;
+            });
         }
-        
-        // Run seed check on load
-        seedDatabase();
 
-        // --- 4. REAL-TIME LISTENER ---
-        const q = query(scheduleRef, orderBy("date"), orderBy("time"));
-        onSnapshot(q, (snapshot) => {
-            allEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // --- 4. LISTENER ---
+        checkAndSeed();
+
+        scheduleRef.orderBy("date").orderBy("time").onSnapshot((snapshot) => {
+            allEvents = [];
+            snapshot.forEach((doc) => {
+                allEvents.push({ id: doc.id, ...doc.data() });
+            });
             renderSchedule();
             document.getElementById('loading').classList.add('hidden');
         });
 
-        // --- 5. RENDERING LOGIC ---
-        window.renderSchedule = function() {
+        // --- 5. RENDER ---
+        function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
             container.innerHTML = '';
-
-            // Filter by week
             const weekEvents = allEvents.filter(e => e.week == currentWeek);
 
             if (weekEvents.length === 0) {
@@ -193,29 +204,24 @@
                 return;
             }
 
-            // Group by Date
             const grouped = {};
             weekEvents.forEach(event => {
                 if (!grouped[event.date]) grouped[event.date] = [];
                 grouped[event.date].push(event);
             });
 
-            // Render Groups
             Object.keys(grouped).sort().forEach(date => {
-                // Date Header
                 const dateObj = new Date(date);
                 const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
                 
                 container.innerHTML += `<div class="font-bold text-gray-500 text-sm mt-4 mb-2 pl-2 border-l-4 border-blue-500">${dayName}</div>`;
 
-                // Event Cards
                 grouped[date].forEach(event => {
                     const isPending = event.time.includes("TBC") || event.venue === "N/A" || event.venue === "TBC";
                     const statusColor = isPending ? "border-red-400 bg-red-50" : "border-green-400 bg-white";
-                    const icon = getIcon(event.type);
-
+                    
                     const html = `
-                        <div class="relative p-4 rounded-lg shadow-sm border-l-4 ${statusColor} mb-3 flex justify-between items-center transition hover:shadow-md" onclick="handleCardClick('${event.id}')">
+                        <div class="relative p-4 rounded-lg shadow-sm border-l-4 ${statusColor} mb-3 flex justify-between items-center transition hover:shadow-md cursor-pointer" onclick="handleCardClick('${event.id}')">
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded ${getTypeColor(event.type)} text-white">${event.type}</span>
@@ -236,14 +242,7 @@
             });
         }
 
-        // --- 6. HELPERS ---
-        function getIcon(type) {
-            if(type === 'BST') return 'fa-user-md';
-            if(type === 'Lecture') return 'fa-chalkboard-teacher';
-            if(type === 'Seminar') return 'fa-users';
-            return 'fa-calendar';
-        }
-
+        // --- 6. HELPERS & UI ---
         function getTypeColor(type) {
             if(type === 'BST') return 'bg-purple-500';
             if(type === 'Lecture') return 'bg-blue-500';
@@ -251,8 +250,7 @@
             return 'bg-gray-500';
         }
 
-        // --- 7. ADMIN FUNCTIONS ---
-        window.toggleAdmin = function() {
+        function toggleAdmin() {
             if (isAdmin) {
                 isAdmin = false;
                 document.getElementById('modeDisplay').innerText = "Student View (Read Only)";
@@ -267,19 +265,17 @@
                     document.getElementById('addEventBtn').classList.remove('hidden');
                     document.querySelector('footer button').innerText = "Logout";
                     renderSchedule();
-                } else {
-                    alert("Wrong passcode");
-                }
+                } else { alert("Wrong passcode"); }
             }
         }
 
-        window.handleCardClick = function(id) {
+        function handleCardClick(id) {
             if (!isAdmin) return;
             const event = allEvents.find(e => e.id === id);
             openModal(event);
         }
 
-        window.openModal = function(event = null) {
+        function openModal(event = null) {
             document.getElementById('editModal').classList.remove('hidden');
             if (event) {
                 document.getElementById('modalTitle').innerText = "Edit Session";
@@ -292,12 +288,11 @@
                 document.getElementById('editWeek').value = event.week;
                 document.getElementById('deleteBtn').classList.remove('hidden');
             } else {
-                // New Event
                 document.getElementById('modalTitle').innerText = "New Session";
                 document.getElementById('editId').value = "";
                 document.getElementById('editTitle').value = "";
                 document.getElementById('editLecturer').value = "";
-                document.getElementById('editDate').value = ""; // Default today
+                document.getElementById('editDate').value = "";
                 document.getElementById('editTime').value = "TBC";
                 document.getElementById('editVenue').value = "TBC";
                 document.getElementById('editWeek').value = currentWeek;
@@ -305,11 +300,9 @@
             }
         }
 
-        window.closeModal = function() {
-            document.getElementById('editModal').classList.add('hidden');
-        }
+        function closeModal() { document.getElementById('editModal').classList.add('hidden'); }
 
-        window.saveSession = async function() {
+        function saveSession() {
             const id = document.getElementById('editId').value;
             const data = {
                 title: document.getElementById('editTitle').value,
@@ -318,29 +311,24 @@
                 time: document.getElementById('editTime').value,
                 venue: document.getElementById('editVenue').value,
                 week: document.getElementById('editWeek').value,
-                type: "Custom" // Simplified for new adds
+                type: "Custom"
             };
 
             if (id) {
-                // Update
-                const docRef = doc(db, "schedule_group_b", id);
-                await updateDoc(docRef, data);
+                scheduleRef.doc(id).update(data).then(closeModal);
             } else {
-                // Create
-                await addDoc(scheduleRef, data);
+                scheduleRef.add(data).then(closeModal);
             }
-            closeModal();
         }
 
-        window.deleteSession = async function() {
+        function deleteSession() {
             const id = document.getElementById('editId').value;
-            if(confirm("Are you sure you want to delete this session?")) {
-                await deleteDoc(doc(db, "schedule_group_b", id));
-                closeModal();
+            if(confirm("Delete this session?")) {
+                scheduleRef.doc(id).delete().then(closeModal);
             }
         }
 
-        // --- 8. WEEK NAVIGATION ---
+        // --- 7. TABS ---
         const weekContainer = document.getElementById('weekFilterContainer');
         for (let i = 1; i <= 8; i++) {
             const btn = document.createElement('button');
@@ -350,11 +338,9 @@
             weekContainer.appendChild(btn);
         }
 
-        window.setWeek = function(week, btnElement) {
+        function setWeek(week, btnElement) {
             currentWeek = week;
             renderSchedule();
-            
-            // Update styling
             Array.from(weekContainer.children).forEach(b => {
                 b.className = 'flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold bg-gray-200 text-gray-600';
             });
