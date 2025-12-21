@@ -5,16 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Internal Medicine Schedule</title>
     <style>
-        :root {
-            --primary-color: #0d47a1; /* Deep Blue for Medicine */
-            --header-height: 60px;
-            --bg-color: #f4f6f8;
-            --card-bg: #ffffff;
-            --text-dark: #333;
-            --text-light: #666;
-            --divider-color: #e0e0e0;
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
@@ -23,240 +13,171 @@
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-dark);
-            padding-top: var(--header-height); /* Space for fixed header */
+            background-color: #f2f2f7; /* Standard Light Gray Background */
+            color: #000;
+            padding-top: 60px; /* Space for fixed header */
             padding-bottom: 40px;
         }
 
-        /* --- FIXED TOP HEADER --- */
-        .main-header {
+        /* --- 1. FIXED TOP HEADER (Renamed) --- */
+        .app-header {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: var(--header-height);
-            background-color: var(--primary-color);
-            color: white;
+            height: 60px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #c6c6c8;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 17px;
             font-weight: 600;
             z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background-color: rgba(255, 255, 255, 0.85);
         }
 
-        /* --- SCHEDULE CONTAINER --- */
-        .schedule-container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        /* --- DAY SECTION --- */
-        .day-section {
-            background-color: var(--card-bg);
-            margin-bottom: 10px;
-            /* Visual distinction between days */
-            border-bottom: 8px solid var(--bg-color); 
-        }
-
-        .day-header {
-            padding: 15px 20px;
+        /* --- 3. DISTINCTION BETWEEN DAYS --- */
+        .day-container {
+            margin-bottom: 25px; /* Creates the distinction/gap */
             background-color: #fff;
-            border-bottom: 1px solid var(--divider-color);
-            /* NO position: sticky here anymore */
+            border-top: 1px solid #c6c6c8;
+            border-bottom: 1px solid #c6c6c8;
         }
 
-        .day-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--primary-color);
+        /* --- 2. DAY HEADER (Logic Change: NOT Sticky) --- */
+        .day-header {
+            padding: 10px 16px;
+            background-color: #f2f2f7; /* Slightly darker to distinguish header */
+            color: #6e6e73;
+            font-size: 13px;
+            text-transform: uppercase;
+            font-weight: 600;
+            /* CRITICAL CHANGE: Removed 'position: sticky' so it scrolls away */
         }
 
-        .date-sub {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            margin-top: 2px;
-        }
-
-        /* --- EVENTS LIST --- */
-        .event-list {
-            list-style: none;
-        }
-
+        /* Content Styling */
         .event-item {
             display: flex;
-            padding: 15px 20px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 12px 16px;
+            background-color: #fff;
+            border-bottom: 1px solid #e5e5ea;
         }
 
         .event-item:last-child {
             border-bottom: none;
         }
 
-        .event-time {
-            width: 70px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text-dark);
+        .time-col {
+            width: 60px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #000;
             flex-shrink: 0;
         }
 
-        .event-details {
+        .info-col {
             flex-grow: 1;
         }
 
         .event-title {
-            font-size: 1rem;
-            font-weight: 500;
-            margin-bottom: 4px;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
         }
 
-        .event-location {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .event-loc {
+            font-size: 13px;
+            color: #8e8e93;
         }
 
-        /* --- NEXT WEEK BUTTON --- */
-        .load-more-container {
+        /* --- 4. NEXT WEEK BUTTON --- */
+        .footer-action {
+            padding: 20px;
             text-align: center;
-            padding: 30px 20px;
         }
 
-        .next-week-btn {
-            background-color: var(--primary-color);
+        .btn-next {
+            background-color: #007aff;
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-size: 1rem;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(13, 71, 161, 0.2);
-            transition: transform 0.2s, background-color 0.2s;
+            width: 100%;
+            max-width: 300px;
         }
 
-        .next-week-btn:active {
-            transform: scale(0.98);
-            background-color: #0a3b8c;
+        .btn-next:active {
+            opacity: 0.8;
         }
 
     </style>
 </head>
 <body>
 
-    <header class="main-header" id="mainHeader">
+    <header class="app-header">
         Internal Medicine
     </header>
 
-    <div class="schedule-container" id="scheduleContainer">
-        
-        <div class="day-section">
-            <div class="day-header">
-                <div class="day-title">Monday</div>
-                <div class="date-sub">December 22</div>
+    <main>
+
+        <div class="day-container">
+            <div class="day-header">Monday, 10 Oct</div>
+            <div class="event-item">
+                <div class="time-col">08:00</div>
+                <div class="info-col">
+                    <div class="event-title">Ward Rounds</div>
+                    <div class="event-loc">General Ward</div>
+                </div>
             </div>
-            <ul class="event-list">
-                <li class="event-item">
-                    <div class="event-time">08:00</div>
-                    <div class="event-details">
-                        <div class="event-title">Ward Rounds</div>
-                        <div class="event-location">General Ward 3</div>
-                    </div>
-                </li>
-                <li class="event-item">
-                    <div class="event-time">10:30</div>
-                    <div class="event-details">
-                        <div class="event-title">Morning Teaching</div>
-                        <div class="event-location">Seminar Room 1</div>
-                    </div>
-                </li>
-                <li class="event-item">
-                    <div class="event-time">14:00</div>
-                    <div class="event-details">
-                        <div class="event-title">Clinic Observation</div>
-                        <div class="event-location">OPD Clinic</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <div class="day-section">
-            <div class="day-header">
-                <div class="day-title">Tuesday</div>
-                <div class="date-sub">December 23</div>
+            <div class="event-item">
+                <div class="time-col">10:00</div>
+                <div class="info-col">
+                    <div class="event-title">Clinic</div>
+                    <div class="event-loc">OPD Room 4</div>
+                </div>
             </div>
-            <ul class="event-list">
-                <li class="event-item">
-                    <div class="event-time">07:30</div>
-                    <div class="event-details">
-                        <div class="event-title">Grand Rounds</div>
-                        <div class="event-location">Auditorium</div>
-                    </div>
-                </li>
-                <li class="event-item">
-                    <div class="event-time">11:00</div>
-                    <div class="event-details">
-                        <div class="event-title">Bedside Teaching</div>
-                        <div class="event-location">Ward 5B</div>
-                    </div>
-                </li>
-            </ul>
         </div>
 
-        <div class="day-section">
-            <div class="day-header">
-                <div class="day-title">Wednesday</div>
-                <div class="date-sub">December 24</div>
+        <div class="day-container">
+            <div class="day-header">Tuesday, 11 Oct</div>
+            <div class="event-item">
+                <div class="time-col">09:00</div>
+                <div class="info-col">
+                    <div class="event-title">Teaching Session</div>
+                    <div class="event-loc">Seminar Room</div>
+                </div>
             </div>
-            <ul class="event-list">
-                <li class="event-item">
-                    <div class="event-time">09:00</div>
-                    <div class="event-details">
-                        <div class="event-title">Case Presentation</div>
-                        <div class="event-location">Meeting Room 2</div>
-                    </div>
-                </li>
-                <li class="event-item">
-                    <div class="event-time">14:00</div>
-                    <div class="event-details">
-                        <div class="event-title">Self Study / Logbook</div>
-                        <div class="event-location">Library</div>
-                    </div>
-                </li>
-            </ul>
+            <div class="event-item">
+                <div class="time-col">14:00</div>
+                <div class="info-col">
+                    <div class="event-title">Grand Rounds</div>
+                    <div class="event-loc">Auditorium</div>
+                </div>
+            </div>
         </div>
 
-        <div class="load-more-container">
-            <button class="next-week-btn" onclick="loadNextWeek()">Load Next Week →</button>
+        <div class="day-container">
+            <div class="day-header">Wednesday, 12 Oct</div>
+            <div class="event-item">
+                <div class="time-col">08:00</div>
+                <div class="info-col">
+                    <div class="event-title">Ward Work</div>
+                    <div class="event-loc">Ward 5B</div>
+                </div>
+            </div>
         </div>
 
-    </div>
+        <div class="footer-action">
+            <button class="btn-next" onclick="alert('Loading next week...')">Next Week</button>
+        </div>
 
-    <script>
-        // Simple logic to simulate loading more days
-        function loadNextWeek() {
-            const btn = document.querySelector('.next-week-btn');
-            btn.textContent = "Loading...";
-            
-            setTimeout(() => {
-                // In a real app, you would fetch data here.
-                // For this demo, we will just alert.
-                alert("This would load the schedule for the following week.");
-                btn.textContent = "Load Next Week →";
-                
-                // Optional: smooth scroll to the new content
-            }, 500);
-        }
+    </main>
 
-        // Optional: Dynamic Header Logic
-        // If you want the header to change text to "Internal Medicine - [Current Visible Date]" 
-        // we can add an IntersectionObserver here. 
-        // Currently, per instructions, it just stays as "Internal Medicine" fixed at top.
-    </script>
 </body>
 </html>
