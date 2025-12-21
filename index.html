@@ -11,7 +11,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* Custom Scrollbar for a cleaner look */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
@@ -25,6 +24,9 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Toast Animation */
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .toast-enter { animation: slideUp 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans h-screen flex flex-col md:flex-row overflow-hidden">
@@ -34,10 +36,7 @@
             <h1 class="font-bold text-2xl text-blue-400 tracking-tight">Group B</h1>
             <p class="text-xs text-gray-500 mt-1 uppercase tracking-wider">Rotation 2 • Medicine I</p>
         </div>
-        
-        <div class="flex-1 overflow-y-auto p-4 space-y-2" id="desktopWeekNav">
-            </div>
-
+        <div class="flex-1 overflow-y-auto p-4 space-y-2" id="desktopWeekNav"></div>
         <div class="p-4 border-t border-gray-700">
              <div id="desktopStatus" class="flex items-center gap-3 bg-gray-900 p-3 rounded-lg text-xs">
                 <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" id="statusDotD"></div>
@@ -58,12 +57,10 @@
                 <span id="statusTextM">Connecting...</span>
             </div>
         </div>
-        <div class="flex gap-2 p-2 overflow-x-auto bg-gray-900 border-t border-gray-800" id="mobileWeekNav">
-            </div>
+        <div class="flex gap-2 p-2 overflow-x-auto bg-gray-900 border-t border-gray-800" id="mobileWeekNav"></div>
     </nav>
 
     <main class="flex-1 h-full overflow-y-auto relative bg-gray-900 p-4 md:p-8">
-        
         <div class="flex justify-between items-end mb-6 md:mb-8 border-b border-gray-800 pb-4">
             <div>
                 <h2 class="text-2xl md:text-3xl font-bold text-white" id="currentWeekTitle">Week 1</h2>
@@ -71,7 +68,7 @@
             </div>
             <div id="adminControls" class="hidden flex gap-3">
                 <button onclick="forceReset()" class="bg-red-900/50 text-red-400 px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-900 border border-red-800/50 transition">
-                    <i class="fas fa-tools mr-1"></i> Repair DB
+                    <i class="fas fa-trash-alt mr-1"></i> Clean & Reset DB
                 </button>
                 <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-500 shadow-lg transition">
                     <i class="fas fa-plus mr-1"></i> Add Session
@@ -82,7 +79,6 @@
         <div id="loading" class="flex flex-col items-center justify-center h-64 text-gray-500">
             <div class="loader mb-4"></div>
             <p class="text-sm">Syncing with database...</p>
-            <p class="text-xs mt-2 text-gray-600 max-w-xs text-center">If this takes long, campus WiFi might be blocking the connection.</p>
         </div>
         
         <div id="errorState" class="hidden flex flex-col items-center justify-center h-64 text-red-400">
@@ -92,10 +88,19 @@
             <button onclick="location.reload()" class="mt-4 bg-gray-800 px-4 py-2 rounded text-xs hover:bg-gray-700">Retry</button>
         </div>
 
-        <div id="scheduleContainer" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-20">
-            </div>
-
+        <div id="scheduleContainer" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-20"></div>
     </main>
+
+    <div id="undoToast" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 border border-gray-700 shadow-2xl rounded-full py-3 px-6 z-[70] flex items-center gap-4 toast-enter">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-check-circle text-green-500"></i>
+            <span class="text-sm font-medium text-white" id="toastMessage">Change Saved</span>
+        </div>
+        <div class="h-4 w-px bg-gray-600"></div>
+        <button onclick="triggerUndo()" class="text-sm font-bold text-yellow-500 hover:text-yellow-400 flex items-center gap-1">
+            <i class="fas fa-undo"></i> Undo
+        </button>
+    </div>
 
     <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] px-4">
         <div class="bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-700 transform transition-all">
@@ -105,49 +110,16 @@
             </div>
             
             <input type="hidden" id="editId">
-            
             <div class="space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Title</label>
-                    <input type="text" id="editTitle" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                </div>
-                
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Lecturer</label>
-                    <input type="text" id="editLecturer" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                </div>
-
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Title</label><input type="text" id="editTitle" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"></div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Lecturer</label><input type="text" id="editLecturer" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"></div>
                 <div class="flex gap-4">
-                    <div class="w-1/2">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Date</label>
-                        <input type="date" id="editDate" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                    </div>
-                    <div class="w-1/2">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Time</label>
-                        <input type="text" id="editTime" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                    </div>
+                    <div class="w-1/2"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Date</label><input type="date" id="editDate" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"></div>
+                    <div class="w-1/2"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Time</label><input type="text" id="editTime" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"></div>
                 </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Venue</label>
-                    <input type="text" id="editVenue" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Week</label>
-                    <select id="editWeek" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                        <option value="1">Week 1</option>
-                        <option value="2">Week 2</option>
-                        <option value="3">Week 3</option>
-                        <option value="4">Week 4</option>
-                        <option value="5">Week 5</option>
-                        <option value="6">Week 6</option>
-                        <option value="7">Week 7</option>
-                        <option value="8">Week 8</option>
-                    </select>
-                </div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Venue</label><input type="text" id="editVenue" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"></div>
+                <div><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Week</label><select id="editWeek" class="w-full bg-gray-900 border border-gray-700 text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option><option value="7">Week 7</option><option value="8">Week 8</option></select></div>
             </div>
-
             <div class="flex gap-3 mt-8">
                 <button id="deleteBtn" onclick="deleteSession()" class="hidden px-4 py-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition font-bold text-sm">Delete</button>
                 <div class="flex-1"></div>
@@ -158,7 +130,6 @@
     </div>
 
     <script>
-        // 1. CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBd9E9VkE7bllIN13NYGz801F4Jue_VzVk",
             authDomain: "im-helper-d3a4a.firebaseapp.com",
@@ -171,18 +142,59 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        
-        // --- KEY FIX FOR PERMISSION ERRORS ON WIFI ---
-        // This forces standard HTTP polling instead of WebSockets/gRPC which gets blocked by firewalls.
         db.settings({ experimentalForceLongPolling: true });
-        
         const scheduleRef = db.collection("schedule_group_b");
 
         let currentWeek = 1;
         let isAdmin = false;
         let allEvents = [];
+        
+        // --- UNDO SYSTEM ---
+        let undoStack = null; // Stores { type: 'edit'|'delete', id: string, data: object }
+        let toastTimeout = null;
 
-        // 2. SEED DATA
+        function showToast(msg) {
+            const toast = document.getElementById('undoToast');
+            document.getElementById('toastMessage').innerText = msg;
+            toast.classList.remove('hidden');
+            
+            // Clear previous timeout if user clicks rapidly
+            if(toastTimeout) clearTimeout(toastTimeout);
+            
+            // Hide after 5 seconds
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('hidden');
+                undoStack = null; // Clear undo history after time expires
+            }, 5000);
+        }
+
+        async function triggerUndo() {
+            if (!undoStack) return;
+
+            const toast = document.getElementById('undoToast');
+            const { type, id, data } = undoStack;
+
+            try {
+                if (type === 'delete') {
+                    // Restore deleted item (Set merge true to be safe, but ID matches)
+                    await scheduleRef.doc(id).set(data);
+                    alert("Restored successfully!");
+                } else if (type === 'edit') {
+                    // Revert edit
+                    await scheduleRef.doc(id).update(data);
+                    alert("Reverted changes!");
+                }
+                
+                // Hide toast immediately
+                toast.classList.add('hidden');
+                undoStack = null;
+
+            } catch (e) {
+                alert("Undo failed: " + e.message);
+            }
+        }
+
+        // SEED DATA
         const seedData = [
             // WEEK 1
             { title: "Briefing & Intro", lecturer: "Dr Affizal", date: "2025-12-22", time: "09:00 AM", venue: "Online", week: 1, type: "Lecture" },
@@ -210,17 +222,13 @@
             { title: "Combined Case Disc", lecturer: "Dr Affizal (BE AF 5)", date: "2026-01-09", time: "TBC (PM)", venue: "TBC", week: 3, type: "CD" }
         ];
 
-        // 3. LISTENERS
+        // LISTENERS
         function updateStatus(status, msg) {
             const color = status === 'ok' ? 'bg-green-500' : 'bg-red-500';
             const animate = status === 'ok' ? '' : 'animate-pulse';
-            
-            // Update Mobile
             const dotM = document.getElementById('statusDotM');
             dotM.className = `w-2 h-2 rounded-full ${color} ${animate}`;
             document.getElementById('statusTextM').innerText = msg;
-
-            // Update Desktop
             const dotD = document.getElementById('statusDotD');
             dotD.className = `w-2 h-2 rounded-full ${color} ${animate}`;
             document.getElementById('statusTextD').innerText = msg;
@@ -241,11 +249,9 @@
             document.getElementById('errorDetail').innerText = error.message;
         });
 
-        // 4. RENDER
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
             const loader = document.getElementById('loading');
-            
             loader.classList.add('hidden');
             container.classList.remove('hidden');
             container.innerHTML = '';
@@ -257,25 +263,22 @@
                     <div class="col-span-full flex flex-col items-center justify-center p-12 text-gray-600 bg-gray-800/50 rounded-2xl border border-gray-800 border-dashed">
                         <i class="fas fa-mug-hot text-4xl mb-4 text-gray-700"></i>
                         <p class="font-medium">No sessions scheduled for Week ${currentWeek}</p>
-                        ${isAdmin ? '<p class="text-xs text-blue-500 mt-2">Use "Repair DB" to upload defaults.</p>' : ''}
+                        ${isAdmin ? '<p class="text-xs text-blue-500 mt-2">Use "Clean & Reset DB" to upload defaults.</p>' : ''}
                     </div>`;
                 return;
             }
 
-            // Group by Date
             const grouped = {};
             weekEvents.forEach(event => {
                 if (!grouped[event.date]) grouped[event.date] = [];
                 grouped[event.date].push(event);
             });
 
-            // Iterate through dates
             Object.keys(grouped).sort().forEach(date => {
                 const dateObj = new Date(date);
                 const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
                 const dateNum = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
                 
-                // Add Date Header within Grid (Spans full width)
                 container.innerHTML += `
                     <div class="col-span-full flex items-center gap-4 mt-4 mb-2">
                         <div class="h-px bg-gray-700 flex-1"></div>
@@ -284,7 +287,6 @@
                     </div>
                 `;
 
-                // Add Cards
                 grouped[date].forEach(event => {
                     const isPending = event.time.includes("TBC") || event.venue === "N/A" || event.venue === "TBC";
                     const statusBorder = isPending ? "border-l-4 border-yellow-500" : "border-l-4 border-green-500";
@@ -297,19 +299,11 @@
                                     <span class="text-[10px] font-extrabold uppercase px-2 py-1 rounded bg-gray-900 text-gray-300 tracking-wide border border-gray-700">${event.type}</span>
                                     ${isPending ? '<span class="text-[10px] text-yellow-500 font-bold flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> TBC</span>' : ''}
                                 </div>
-                                
                                 <h3 class="font-bold text-white text-lg leading-tight mb-1 group-hover:text-blue-400 transition-colors">${event.title}</h3>
                                 <p class="text-xs text-gray-400 font-medium mb-4">${event.lecturer}</p>
-                                
                                 <div class="space-y-2 text-sm text-gray-300 border-t border-gray-700/50 pt-3">
-                                    <div class="flex items-center gap-3">
-                                        <i class="far fa-clock text-blue-500 w-4 text-center"></i> 
-                                        <span>${event.time}</span>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <i class="fas fa-map-marker-alt text-red-500 w-4 text-center"></i> 
-                                        <span>${event.venue}</span>
-                                    </div>
+                                    <div class="flex items-center gap-3"><i class="far fa-clock text-blue-500 w-4 text-center"></i> <span>${event.time}</span></div>
+                                    <div class="flex items-center gap-3"><i class="fas fa-map-marker-alt text-red-500 w-4 text-center"></i> <span>${event.venue}</span></div>
                                 </div>
                             </div>
                             ${isAdmin ? '<div class="absolute top-4 right-4 text-gray-600 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-pen"></i></div>' : ''}
@@ -320,7 +314,7 @@
             });
         }
 
-        // 5. ADMIN & REPAIR
+        // ADMIN LOGIC
         function toggleAdmin() {
             if (isAdmin) {
                 isAdmin = false;
@@ -339,38 +333,25 @@
         }
 
         async function forceReset() {
-            if(!confirm("⚠️ This will WIPE and RE-UPLOAD the default schedule. Are you sure?")) return;
-            
+            if(!confirm("⚠️ Cleanup Duplicates? This will DELETE all current data and reset to default.")) return;
+            const snapshot = await scheduleRef.get();
             const batch = db.batch();
-            
-            // Delete existing (simplified: just adds new ones for now to avoid complexity)
-            // Ideally we delete, but batch writes are easier.
-            
-            seedData.forEach((docData) => {
-                const newRef = scheduleRef.doc();
-                batch.set(newRef, docData);
-            });
-            
-            try {
-                await batch.commit();
-                alert("Database Repaired! The page will now reload.");
-                location.reload(); // Force reload to fetch fresh data
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+            snapshot.docs.forEach((doc) => { batch.delete(doc.ref); });
+            await batch.commit(); 
+            const seedBatch = db.batch();
+            seedData.forEach((docData) => { const newRef = scheduleRef.doc(); seedBatch.set(newRef, docData); });
+            await seedBatch.commit();
+            alert("Cleanup Complete! Duplicates removed.");
+            location.reload();
         }
 
-        // 6. UI & NAVIGATION
+        // UI NAV
         function initNav() {
             const mobileContainer = document.getElementById('mobileWeekNav');
             const desktopContainer = document.getElementById('desktopWeekNav');
-            
-            // Clear
-            mobileContainer.innerHTML = '';
-            desktopContainer.innerHTML = '';
+            mobileContainer.innerHTML = ''; desktopContainer.innerHTML = '';
 
             for (let i = 1; i <= 8; i++) {
-                // Mobile Button
                 const btnM = document.createElement('button');
                 btnM.innerText = `W${i}`;
                 btnM.className = `flex-shrink-0 w-10 h-10 rounded-full text-xs font-bold transition ${i === 1 ? 'bg-blue-600 text-white shadow-lg shadow-blue-900' : 'bg-gray-800 text-gray-400 border border-gray-700'}`;
@@ -378,7 +359,6 @@
                 btnM.id = `navM_${i}`;
                 mobileContainer.appendChild(btnM);
 
-                // Desktop Button
                 const btnD = document.createElement('button');
                 btnD.innerHTML = `<span class="opacity-50">Week</span> ${i}`;
                 btnD.className = `w-full text-left px-4 py-3 rounded-lg text-sm font-bold transition flex justify-between items-center ${i === 1 ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-700/50'}`;
@@ -392,12 +372,9 @@
             currentWeek = week;
             document.getElementById('currentWeekTitle').innerText = `Week ${week}`;
             renderSchedule();
-            
-            // Update Styles
             for (let i = 1; i <= 8; i++) {
                 const m = document.getElementById(`navM_${i}`);
                 const d = document.getElementById(`navD_${i}`);
-                
                 if (i === week) {
                     m.className = `flex-shrink-0 w-10 h-10 rounded-full text-xs font-bold transition bg-blue-600 text-white shadow-lg shadow-blue-900`;
                     d.className = `w-full text-left px-4 py-3 rounded-lg text-sm font-bold transition flex justify-between items-center bg-blue-600 text-white shadow-lg`;
@@ -408,13 +385,12 @@
             }
         }
 
-        // 7. MODAL LOGIC
+        // MODAL
         function handleCardClick(id) {
             if (!isAdmin) return;
             const event = allEvents.find(e => e.id === id);
             openModal(event);
         }
-
         function openModal(event = null) {
             document.getElementById('editModal').classList.remove('hidden');
             if (event) {
@@ -439,10 +415,9 @@
                 document.getElementById('deleteBtn').classList.add('hidden');
             }
         }
-
         function closeModal() { document.getElementById('editModal').classList.add('hidden'); }
-
-        function saveSession() {
+        
+        async function saveSession() {
             const id = document.getElementById('editId').value;
             const data = {
                 title: document.getElementById('editTitle').value,
@@ -454,24 +429,37 @@
                 type: "Custom"
             };
 
+            // Prepare UNDO state
             if (id) {
-                scheduleRef.doc(id).update(data).then(closeModal);
+                // We are editing: save old data for undo
+                const oldData = allEvents.find(e => e.id === id);
+                undoStack = { type: 'edit', id: id, data: oldData };
+                
+                await scheduleRef.doc(id).update(data);
+                showToast("Session updated");
             } else {
-                scheduleRef.add(data).then(closeModal);
+                // New session (Undo not supported for creation in this simple version)
+                await scheduleRef.add(data);
             }
+            closeModal();
         }
 
-        function deleteSession() {
+        async function deleteSession() {
             const id = document.getElementById('editId').value;
-            if(confirm("Delete this session?")) {
-                scheduleRef.doc(id).delete().then(closeModal);
+            const oldData = allEvents.find(e => e.id === id);
+            
+            if(confirm("Delete this session?")) { 
+                // Prepare UNDO state
+                undoStack = { type: 'delete', id: id, data: oldData };
+                
+                await scheduleRef.doc(id).delete();
+                closeModal();
+                showToast("Session deleted");
             }
         }
 
-        // Init
         initNav();
         setWeek(1);
-
     </script>
 </body>
 </html>
