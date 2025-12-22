@@ -125,7 +125,7 @@
             border: none;
             color: var(--text-muted);
             padding: 8px;
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 700;
             text-transform: uppercase;
             cursor: pointer;
@@ -263,8 +263,9 @@
         <aside id="sidebar">
             <div class="nav-header">
                 <div class="view-toggle">
-                    <button id="btnViewWeek" class="toggle-btn active" onclick="switchView('week')">Weeks</button>
-                    <button id="btnViewLecturer" class="toggle-btn" onclick="switchView('lecturer')">Lecturers</button>
+                    <button id="btnViewWeek" class="toggle-btn active" onclick="switchView('week')">Week</button>
+                    <button id="btnViewLecturer" class="toggle-btn" onclick="switchView('lecturer')">Lecturer</button>
+                    <button id="btnViewGroup" class="toggle-btn" onclick="switchView('group')">Group</button>
                 </div>
             </div>
             <div id="weekList" class="nav-scroll-area"></div>
@@ -312,7 +313,19 @@
             <div class="sheet-header"><h2 id="presentFormTitle">Presentation Spot</h2><button class="sheet-close" onclick="closeModal('presentFormModal')">×</button></div>
             <div class="sheet-body">
                 <input type="hidden" id="editPresenterId">
-                <div class="form-group"><label class="form-label">Your Name (Required)</label><input type="text" id="inpPresName" class="form-input"></div>
+                <div class="form-group">
+                    <label class="form-label">Your Name</label>
+                    <select id="inpPresName" class="form-select">
+                        <option value="">Select Name...</option>
+                        <option value="Aina">Aina</option>
+                        <option value="Amy">Amy</option>
+                        <option value="Clarissa">Clarissa</option>
+                        <option value="Danisha">Danisha</option>
+                        <option value="Qaireel">Qaireel</option>
+                        <option value="Sashmitha">Sashmitha</option>
+                        <option value="Xin Ee">Xin Ee</option>
+                    </select>
+                </div>
                 <div class="form-group"><label class="form-label">Case Name (Optional)</label><input type="text" id="inpPresCase" class="form-input" placeholder="e.g. Chronic Liver Disease"></div>
                 <div class="form-group"><label class="form-label">Details (Optional)</label><textarea id="inpPresDetail" class="form-input" rows="4"></textarea></div>
                 <button onclick="submitPresentation()" class="btn btn-primary">Save Info</button>
@@ -376,8 +389,9 @@
 
         const lecturerContacts = { "Dr Affizal Samsudin": "60176631789", "Dr Asri B Said": "60138021143", "Dr Chai Chee Shee": "60198188265", "Dr Chan En Ze": "60105054955", "Dr Chow Han Bing": "60192712889", "Dr Diana Ng": "60198198265", "Dr Frederick De Rozario": "60168678252", "Dr Henry Gudum": "60198895047", "Dr Joshua Chung": "60168963966", "Dr Kuan Jew Win": "60198593011", "Dr Ling Hwei Sung": "60128939596", "Dr Loh Huai Heng": "60122010765", "Dr Sim Chun Yang": "60138273338", "Dr Sim Sing Yee": "60138338862", "Dr Yeoh Cheng Wooi": "60182628290" };
         const lecturers = Object.keys(lecturerContacts).sort(); lecturers.push("Other");
+        const groupMembers = ["Aina", "Amy", "Clarissa", "Danisha", "Qaireel", "Sashmitha", "Xin Ee"];
 
-        let allEvents = [], currentWeek = 1, viewMode = 'week', currentLecturer = null, isAdmin = false, currentDetailId = null, currentPresIndex = null;
+        let allEvents = [], currentWeek = 1, viewMode = 'week', currentLecturer = null, currentMember = null, isAdmin = false, currentDetailId = null, currentPresIndex = null;
 
         scheduleRef.orderBy("date").orderBy("time").onSnapshot(s => {
             allEvents = s.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -390,6 +404,7 @@
             viewMode = m; 
             document.getElementById('btnViewWeek').classList.toggle('active', m === 'week');
             document.getElementById('btnViewLecturer').classList.toggle('active', m === 'lecturer');
+            document.getElementById('btnViewGroup').classList.toggle('active', m === 'group');
             toggleSidebar(false); renderSidebarNav(); renderSchedule(); 
         }
         
@@ -412,7 +427,7 @@
                     list.appendChild(div);
                 }
                 document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
-            } else {
+            } else if (viewMode === 'lecturer') {
                 const names = new Set(Object.keys(lecturerContacts));
                 allEvents.forEach(e => { if(e.lecturer) names.add(e.lecturer); });
                 Array.from(names).sort().forEach(n => {
@@ -423,15 +438,31 @@
                     list.appendChild(div);
                 });
                 document.getElementById('currentWeekBadge').innerText = "Lecturer";
+            } else {
+                groupMembers.forEach(n => {
+                    const div = document.createElement('div');
+                    div.className = `nav-item ${n === currentMember ? 'active' : ''}`;
+                    div.onclick = () => { currentMember = n; toggleSidebar(false); renderSidebarNav(); renderSchedule(); };
+                    div.innerHTML = `<div class="nav-title">${n}</div>`;
+                    list.appendChild(div);
+                });
+                document.getElementById('currentWeekBadge').innerText = "Member";
             }
         }
 
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer'); container.innerHTML = '';
-            let filtered = viewMode === 'week' ? allEvents.filter(e => e.week == currentWeek) : allEvents.filter(e => e.lecturer === currentLecturer);
-            
-            if (viewMode === 'week') document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
-            else if (currentLecturer) document.getElementById('mainHeaderTitle').innerText = currentLecturer;
+            let filtered = [];
+            if(viewMode === 'week') {
+                filtered = allEvents.filter(e => e.week == currentWeek);
+                document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
+            } else if(viewMode === 'lecturer') {
+                filtered = allEvents.filter(e => e.lecturer === currentLecturer);
+                if(currentLecturer) document.getElementById('mainHeaderTitle').innerText = currentLecturer;
+            } else {
+                filtered = allEvents.filter(e => e.presenters && e.presenters.some(p => p.name === currentMember));
+                if(currentMember) document.getElementById('mainHeaderTitle').innerText = "Presentations: " + currentMember;
+            }
 
             if(filtered.length === 0) { 
                 container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; 
@@ -459,6 +490,7 @@
                 div.innerHTML = `<div class="day-header"><span class="day-name">${div.dataset.dayName}</span><span class="day-date">${date}</span></div>` + cards;
                 container.appendChild(div);
             });
+
             if(viewMode === 'week') appendNextWeekButton(container);
         }
 
@@ -499,11 +531,14 @@
             
             const btnGroup = document.getElementById('contactSection'); btnGroup.innerHTML = ''; btnGroup.classList.add('hidden');
             let p = ev.lecturerPhone || lecturerContacts[ev.lecturer];
-            if (p) { btnGroup.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; btnGroup.classList.remove('hidden'); }
+            if (p) { 
+                btnGroup.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; 
+                btnGroup.classList.remove('hidden'); 
+            }
 
             const presSec = document.getElementById('presenterSection'), presList = document.getElementById('presenterList');
             presList.innerHTML = '';
-            if (ev.type === "BST" || ev.type === "Case Discussion") {
+            if (ev.type === "BST" || ev.type === "Case Discussion" || ev.type === "Seminar") {
                 presSec.classList.remove('hidden');
                 (ev.presenters || []).forEach((p, idx) => {
                     const tag = document.createElement('div'); tag.className = 'presenter-tag'; tag.innerText = p.name;
@@ -539,7 +574,7 @@
 
         async function submitPresentation() {
             const name = document.getElementById('inpPresName').value, editId = document.getElementById('editPresenterId').value;
-            if(!name) return alert("Name required");
+            if(!name) return alert("Select your name");
             let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
             if(editId) presenters = presenters.map(p => p.id === editId ? {...p, name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value} : p);
             else presenters.push({ id: Date.now().toString(), name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value });
@@ -547,7 +582,7 @@
         }
 
         async function deletePresentation() {
-            if(!confirm("Remove entry?")) return;
+            if(!confirm("Remove registration?")) return;
             let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
             presenters.splice(currentPresIndex, 1);
             await scheduleRef.doc(currentDetailId).update({ presenters }); closeModal('viewPresenterModal');
