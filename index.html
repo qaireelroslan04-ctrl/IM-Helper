@@ -61,6 +61,7 @@
             overflow: hidden;
         }
 
+        /* --- HEADER --- */
         header {
             background-color: var(--header-bg);
             backdrop-filter: blur(12px);
@@ -76,10 +77,10 @@
         }
 
         .header-left { display: flex; align-items: center; gap: 1rem; flex: 1; overflow: hidden; }
-        .menu-toggle { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; display: none; }
-        .app-title { font-size: 1.1rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; }
-        .week-badge { font-size: 0.75rem; background: var(--bg-input); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 700; }
-        .theme-toggle { background: none; border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .menu-toggle { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; display: block; }
+        .app-title { font-size: 1.15rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; }
+        .week-badge { font-size: 0.7rem; background: var(--bg-input); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 700; }
+        .theme-toggle { background: none; border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
 
         .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
 
@@ -95,23 +96,23 @@
         }
 
         .nav-header { 
-            padding: 1.5rem; 
-            padding-top: calc(1.5rem + env(safe-area-inset-top)); /* Push switcher down below camera */
+            padding: 1.2rem 1rem; 
+            padding-top: calc(1rem + env(safe-area-inset-top)); /* Pushes switcher below camera Notch */
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0; 
         }
 
         .view-toggle { display: flex; background: var(--bg-input); padding: 4px; border-radius: 12px; gap: 4px; }
-        .toggle-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+        .toggle-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px 2px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
         .toggle-btn.active { background: var(--accent-color); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
         .nav-scroll-area { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
-        .nav-item { padding: 1.2rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color); transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .nav-item { padding: 1.2rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
         .nav-item:hover { background: var(--bg-input); }
         .nav-item.active { background: var(--accent-bg); border-left: 4px solid var(--accent-color); }
-        .nav-item .nav-title { font-weight: 700; font-size: 0.95rem; }
+        .nav-item .nav-title { font-weight: 700; font-size: 0.9rem; }
 
-        .sidebar-footer { flex-shrink: 0; padding: 1.5rem; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--border-color); background: var(--bg-sidebar); }
+        .sidebar-footer { flex-shrink: 0; padding: 1.5rem; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--border-color); }
 
         /* --- MAIN CONTENT --- */
         main { flex: 1; overflow-y: auto; padding: 1rem; scroll-behavior: smooth; padding-bottom: 120px; }
@@ -138,7 +139,7 @@
         .tbc-alert { color: var(--status-yellow); font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 
         .next-week-container { padding: 2rem 0; text-align: center; }
-        .btn-next-week { background-color: var(--bg-input); color: var(--accent-color); border: 1px solid var(--border-color); padding: 1rem 2rem; border-radius: 2rem; font-weight: 700; font-size: 1rem; cursor: pointer; width: 100%; max-width: 300px; }
+        .btn-next-week { background-color: var(--bg-input); color: var(--accent-color); border: 1px solid var(--border-color); padding: 1rem 2rem; border-radius: 2rem; font-weight: 700; cursor: pointer; width: 100%; max-width: 300px; }
 
         /* --- MODALS --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; }
@@ -155,22 +156,17 @@
         .sheet-close { background: var(--bg-input); border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-main); cursor: pointer; font-size: 1.2rem; }
         .sheet-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
 
-        .detail-row { margin-bottom: 1.5rem; }
-        .detail-label { font-size: 0.75rem; text-transform: uppercase; color: var(--accent-color); font-weight: 700; margin-bottom: 0.5rem; }
-        .detail-value { font-size: 1.1rem; }
-        .detail-note { background: var(--bg-input); padding: 1rem; border-radius: 0.5rem; border-left: 3px solid var(--accent-color); }
-
         .btn-whatsapp { background-color: var(--whatsapp-bg); color: var(--whatsapp-color); border: 1px solid var(--whatsapp-color); padding: 0.8rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; margin-top: 1rem; }
         .presenter-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
         .presenter-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         .presenter-tag { background: var(--accent-bg); color: var(--accent-text); padding: 6px 12px; border-radius: 1rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid var(--accent-color); }
 
         .form-group { margin-bottom: 1rem; }
-        .form-label { display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted); }
-        .form-input, .form-select { width: 100%; padding: 0.8rem; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 0.5rem; font-size: 1rem; outline: none; }
+        .form-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+        .form-input, .form-select { width: 100%; padding: 0.8rem; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 0.5rem; outline: none; font-size: 1rem; }
         .btn { padding: 0.8rem 1.5rem; border-radius: 0.5rem; font-weight: 700; border: none; cursor: pointer; width: 100%; margin-top: 1rem; }
         .btn-primary { background: var(--accent-color); color: white; }
-        .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; margin-top: 0.5rem; }
+        .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; border: 1px solid #ef4444; }
         .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
         .hidden { display: none; }
 
@@ -187,7 +183,7 @@
 </head>
 <body>
 
-    <header>
+    <header id="mainHeader">
         <div class="header-left">
             <button class="menu-toggle" onclick="toggleSidebar(true)">☰</button>
             <h1 class="app-title" id="mainHeaderTitle">Internal Medicine</h1>
@@ -216,7 +212,7 @@
         </aside>
 
         <main id="scheduleContainer">
-            <div style="text-align: center; padding-top: 5rem; color: var(--text-muted);">Loading...</div>
+            <div style="text-align: center; padding-top: 5rem; color: var(--text-muted);">Loading Schedule...</div>
         </main>
     </div>
 
@@ -225,7 +221,7 @@
     <div id="detailModal" class="modal-overlay">
         <div class="detail-sheet">
             <div class="sheet-header">
-                <div><span class="card-type" id="detailType">SESSION</span><h2 style="margin-top: 0.5rem; font-size: 1.5rem;" id="detailTitle">Title</h2></div>
+                <div><span class="card-type" id="detailType">LECTURE</span><h2 style="margin-top: 0.5rem; font-size: 1.5rem;" id="detailTitle">Title</h2></div>
                 <button class="sheet-close" onclick="closeModal('detailModal')">×</button>
             </div>
             <div class="sheet-body">
@@ -239,7 +235,7 @@
                 <div id="presenterSection" class="presenter-section hidden">
                     <div class="detail-label">Students Presenting</div>
                     <div id="presenterList" class="presenter-list"></div>
-                    <button class="btn btn-primary" onclick="openPresentForm()">I'm Presenting</button>
+                    <button class="btn btn-primary" onclick="openPresentForm()" style="margin-top: 1rem;">I'm Presenting</button>
                 </div>
                 
                 <button id="editBtn" class="hidden btn btn-ghost" style="margin-top:1rem" onclick="editCurrentClass()">Edit Class (Admin)</button>
@@ -249,13 +245,25 @@
 
     <div id="presentFormModal" class="modal-overlay">
         <div class="detail-sheet">
-            <div class="sheet-header"><h2 id="presentFormTitle">Register Presenter</h2><button class="sheet-close" onclick="closeModal('presentFormModal')">×</button></div>
+            <div class="sheet-header"><h2 id="presentFormTitle">Presentation Info</h2><button class="sheet-close" onclick="closeModal('presentFormModal')">×</button></div>
             <div class="sheet-body">
                 <input type="hidden" id="editPresenterId">
-                <div class="form-group"><label class="form-label">Name</label><select id="inpPresName" class="form-select"><option value="">Choose Name...</option><option value="Aina">Aina</option><option value="Amy">Amy</option><option value="Clarissa">Clarissa</option><option value="Danisha">Danisha</option><option value="Qaireel">Qaireel</option><option value="Sashmitha">Sashmitha</option><option value="Xin Ee">Xin Ee</option></select></div>
+                <div class="form-group">
+                    <label class="form-label">Name (Required)</label>
+                    <select id="inpPresName" class="form-select">
+                        <option value="">Select Name...</option>
+                        <option value="Aina">Aina</option>
+                        <option value="Amy">Amy</option>
+                        <option value="Clarissa">Clarissa</option>
+                        <option value="Danisha">Danisha</option>
+                        <option value="Qaireel">Qaireel</option>
+                        <option value="Sashmitha">Sashmitha</option>
+                        <option value="Xin Ee">Xin Ee</option>
+                    </select>
+                </div>
                 <div class="form-group"><label class="form-label">Case Name (Optional)</label><input type="text" id="inpPresCase" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Findings (Optional)</label><textarea id="inpPresDetail" class="form-input" rows="4"></textarea></div>
-                <button onclick="submitPresentation()" class="btn btn-primary">Save Info</button>
+                <div class="form-group"><label class="form-label">Key Details (Optional)</label><textarea id="inpPresDetail" class="form-input" rows="4"></textarea></div>
+                <button onclick="submitPresentation()" class="btn btn-primary">Save Presentation</button>
             </div>
         </div>
     </div>
@@ -264,11 +272,11 @@
         <div class="detail-sheet">
             <div class="sheet-header"><h2 id="viewPresName">Presenter</h2><button class="sheet-close" onclick="closeModal('viewPresenterModal')">×</button></div>
             <div class="sheet-body">
-                <div class="detail-row"><div class="detail-label">Case Name</div><div class="detail-value" id="viewPresCase"></div></div>
+                <div class="detail-row"><div class="detail-label">Case Presenting</div><div class="detail-value" id="viewPresCase"></div></div>
                 <div class="detail-row"><div class="detail-label">Details</div><div class="detail-note" id="viewPresDetail"></div></div>
                 <div class="btn-group" style="display:flex; gap:10px; flex-direction:row">
-                    <button class="btn btn-primary" style="flex:1" onclick="openEditPresenter()">Edit</button>
-                    <button class="btn btn-danger" style="flex:1" onclick="deletePresentation()">Remove</button>
+                    <button class="btn btn-primary" style="flex:1" onclick="openEditPresenter()">Edit My Case</button>
+                    <button class="btn btn-danger" style="flex:1" onclick="deletePresentation()">Remove Entry</button>
                 </div>
             </div>
         </div>
@@ -276,19 +284,27 @@
 
     <div id="editModal" class="modal-overlay">
         <div class="detail-sheet">
-            <div class="sheet-header"><h2>Manage Class</h2><button class="sheet-close" onclick="closeModal('editModal')">×</button></div>
+            <div class="sheet-header"><h2>Manage Session</h2><button class="sheet-close" onclick="closeModal('editModal')">×</button></div>
             <div class="sheet-body">
                 <input type="hidden" id="editId">
                 <div class="form-group"><label class="form-label">Type</label><select id="inpType" class="form-select"><option value="Lecture">Lecture</option><option value="BST">BST</option><option value="Case Discussion">Case Discussion</option><option value="Seminar">Seminar</option><option value="Exam">Exam</option><option value="Custom">Other</option></select></div>
                 <div class="form-group"><label class="form-label">Title</label><input type="text" id="inpTitle" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Lecturer</label><select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select><div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" style="margin-top:0.5rem"></div><input type="tel" id="inpLecturerPhone" class="form-input" placeholder="WhatsApp Phone" style="margin-top:0.5rem"></div>
+                <div class="form-group">
+                    <label class="form-label">Lecturer</label>
+                    <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select>
+                    <div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" style="margin-top:0.5rem"></div>
+                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Custom WhatsApp No." style="margin-top:0.5rem">
+                </div>
                 <div class="form-group"><label class="form-label">Date</label><input type="date" id="inpDate" class="form-input"></div>
                 <div class="form-group time-row"><div class="time-block"><label class="form-label">Start</label><input type="time" id="inpStartTime" class="form-input"></div><div class="time-block"><label class="form-label">End</label><input type="time" id="inpEndTime" class="form-input"></div></div>
                 <div class="form-group"><label class="form-label">Venue</label><input type="text" id="inpVenue" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Week</label><select id="inpWeek" class="form-select"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
+                <div class="form-group">
+                     <label class="form-label">Week</label>
+                     <select id="inpWeek" class="form-select"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select>
+                </div>
                 <div class="form-group"><label class="form-label">Notes</label><textarea id="inpNotes" class="form-input"></textarea></div>
                 <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
-                <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete</button>
+                <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Session</button>
             </div>
         </div>
     </div>
@@ -311,12 +327,16 @@
             if(currentDetailId) openDetail(currentDetailId);
         });
 
+        // --- NAVIGATION ---
         function switchView(m) { 
             viewMode = m; 
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.id === 'btnView' + m.charAt(0).toUpperCase() + m.slice(1)));
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            if(m === 'week') document.getElementById('btnViewWeek').classList.add('active');
+            if(m === 'lecturer') document.getElementById('btnViewLecturer').classList.add('active');
+            if(m === 'group') document.getElementById('btnViewGroup').classList.add('active');
             toggleSidebar(false); renderSidebarNav(); renderSchedule(); 
         }
-
+        
         function toggleSidebar(force) { 
             const sb = document.getElementById('sidebar'), bd = document.getElementById('backdrop');
             if (force === true) { sb.classList.add('open'); bd.classList.add('open'); }
@@ -330,7 +350,8 @@
             const list = document.getElementById('weekList'); list.innerHTML = '';
             if (viewMode === 'week') {
                 for(let i=1; i<=8; i++) {
-                    const div = document.createElement('div'); div.className = `nav-item ${i === currentWeek ? 'active' : ''}`;
+                    const div = document.createElement('div');
+                    div.className = `nav-item ${i === currentWeek ? 'active' : ''}`;
                     div.onclick = () => { currentWeek = i; toggleSidebar(false); renderSidebarNav(); renderSchedule(); };
                     div.innerHTML = `<div class="nav-title">Week ${i}</div>`; list.appendChild(div);
                 }
@@ -338,14 +359,16 @@
             } else if (viewMode === 'lecturer') {
                 const names = new Set(Object.keys(lecturerContacts)); allEvents.forEach(e => { if(e.lecturer) names.add(e.lecturer); });
                 Array.from(names).sort().forEach(n => {
-                    const div = document.createElement('div'); div.className = `nav-item ${n === currentLecturer ? 'active' : ''}`;
+                    const div = document.createElement('div');
+                    div.className = `nav-item ${n === currentLecturer ? 'active' : ''}`;
                     div.onclick = () => { currentLecturer = n; toggleSidebar(false); renderSidebarNav(); renderSchedule(); };
                     div.innerHTML = `<div class="nav-title">${n}</div>`; list.appendChild(div);
                 });
                 document.getElementById('currentWeekBadge').innerText = "Lecturer";
             } else {
                 groupMembers.forEach(n => {
-                    const div = document.createElement('div'); div.className = `nav-item ${n === currentMember ? 'active' : ''}`;
+                    const div = document.createElement('div');
+                    div.className = `nav-item ${n === currentMember ? 'active' : ''}`;
                     div.onclick = () => { currentMember = n; toggleSidebar(false); renderSidebarNav(); renderSchedule(); };
                     div.innerHTML = `<div class="nav-title">${n}</div>`; list.appendChild(div);
                 });
@@ -375,8 +398,13 @@
                     const isTBA = t.includes('TBA') || t.includes('TBC') || ev.venue.includes('TBA') || ev.venue.includes('TBC');
                     cards += `<div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')">
                         <div class="time-col"><span class="time-start">${t.split(' ')[0]}</span><span class="time-ampm">${t.split(' ')[1] || ''}</span></div>
-                        <div class="info-col"><span class="card-type">${ev.type}</span><div class="card-title">${ev.title}</div><div class="card-meta">${ev.lecturer} • ${ev.venue}</div>
-                        ${isTBA ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}</div></div>`;
+                        <div class="info-col">
+                            <span class="card-type">${ev.type}</span>
+                            <div class="card-title">${ev.title}</div>
+                            <div class="card-meta">${ev.lecturer} • ${ev.venue}</div>
+                            ${isTBA ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}
+                        </div>
+                    </div>`;
                 });
                 div.innerHTML = `<div class="day-header"><span class="day-name">${dayName}</span><span class="day-date">${date}</span></div>` + cards;
                 container.appendChild(div);
@@ -434,8 +462,8 @@
         function viewPresenter(idx) {
             currentPresIndex = idx; const p = allEvents.find(e => e.id === currentDetailId).presenters[idx];
             document.getElementById('viewPresName').innerText = p.name;
-            document.getElementById('viewPresCase').innerText = p.caseName || "Unspecified";
-            document.getElementById('viewPresDetail').innerText = p.detail || "None";
+            document.getElementById('viewPresCase').innerText = p.caseName || "Registration Reserved";
+            document.getElementById('viewPresDetail').innerText = p.detail || "No details provided yet.";
             document.getElementById('viewPresenterModal').classList.add('active');
         }
 
@@ -454,7 +482,7 @@
 
         async function submitPresentation() {
             const name = document.getElementById('inpPresName').value, editId = document.getElementById('editPresenterId').value;
-            if(!name) return alert("Name required");
+            if(!name) return alert("Select your name");
             let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
             if(editId) presenters = presenters.map(p => p.id === editId ? {...p, name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value} : p);
             else presenters.push({ id: Date.now().toString(), name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value });
@@ -462,7 +490,7 @@
         }
 
         async function deletePresentation() {
-            if(!confirm("Remove?")) return;
+            if(!confirm("Remove registration?")) return;
             let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
             presenters.splice(currentPresIndex, 1);
             await scheduleRef.doc(currentDetailId).update({ presenters }); closeModal('viewPresenterModal');
@@ -471,6 +499,17 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='detailModal') currentDetailId=null; }
         function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); }
         function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').classList.remove('hidden'); document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
+
+        function convertTo12Hour(time) { let [h, m] = time.split(':'); const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${m} ${ampm}`; }
+        function convertTo24Hour(timeStr) {
+            if(!timeStr) return "";
+            const parts = timeStr.split(' ');
+            if (parts.length < 2) return timeStr; // fallback for 24h stored
+            let [h, m] = parts[0].split(':');
+            if (h === '12' && parts[1] === 'AM') h = '00';
+            if (parts[1] === 'PM' && h !== '12') h = parseInt(h, 10) + 12;
+            return `${String(h).padStart(2, '0')}:${m}`;
+        }
 
         function openEditModal(isEdit = false) {
             const sel = document.getElementById('inpLecturerSelect'); sel.innerHTML = '<option value="">Select Lecturer...</option>';
@@ -482,7 +521,11 @@
                 document.getElementById('divOtherLecturer').classList.toggle('hidden', sel.value !== "Other");
                 if(sel.value === "Other") document.getElementById('inpLecturerText').value = ev.lecturer;
                 document.getElementById('btnDelete').classList.remove('hidden');
-            } else { document.getElementById('editId').value = ""; document.getElementById('inpDate').value = new Date().toISOString().split('T')[0]; document.getElementById('btnDelete').classList.add('hidden'); }
+                if(ev.time && ev.time !== "TBA") {
+                    document.getElementById('inpStartTime').value = convertTo24Hour(ev.time.split(' - ')[0]);
+                    document.getElementById('inpEndTime').value = convertTo24Hour(ev.time.split(' - ')[1]);
+                }
+            } else { document.getElementById('editId').value = ""; document.getElementById('inpDate').value = new Date().toISOString().split('T')[0]; document.getElementById('btnDelete').classList.add('hidden'); document.getElementById('inpWeek').value = currentWeek; }
             closeModal('detailModal'); document.getElementById('editModal').classList.add('active');
         }
 
@@ -495,8 +538,7 @@
             if(id) await scheduleRef.doc(id).update(data); else await scheduleRef.add(data); closeModal('editModal');
         }
 
-        function convertTo12Hour(time) { let [h, m] = time.split(':'); const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${m} ${ampm}`; }
-        async function deleteClass() { if(confirm("Delete?")) { await scheduleRef.doc(document.getElementById('editId').value).delete(); closeModal('editModal'); } }
+        async function deleteClass() { if(confirm("Delete session?")) { await scheduleRef.doc(document.getElementById('editId').value).delete(); closeModal('editModal'); } }
 
         currentWeek = calculateCurrentWeek(); renderSidebarNav(); renderSchedule();
     </script>
