@@ -14,107 +14,59 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- CSS VARIABLES --- */
         :root {
-            --bg-body: #000000;
-            --bg-sidebar: #050505;
-            --bg-card: #0a0a0a;
-            --bg-box: #111111;
-            --bg-input: #171717;
-            --border-color: #27272a;
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-            --accent-color: #3b82f6;
-            --accent-bg: #172554;
-            --accent-text: #bfdbfe;
-            --header-bg: rgba(0, 0, 0, 0.85);
-            --status-yellow: #d97706;
-            --whatsapp-color: #25D366;
-            --whatsapp-bg: #064e23;
+            --bg-body: #000000; --bg-sidebar: #050505; --bg-card: #0a0a0a;
+            --bg-box: #111111; --bg-input: #171717; --border-color: #27272a;
+            --text-main: #e2e8f0; --text-muted: #94a3b8; --accent-color: #3b82f6;
+            --accent-bg: #172554; --accent-text: #bfdbfe; --header-bg: rgba(0, 0, 0, 0.85);
+            --status-yellow: #d97706; --whatsapp-color: #25D366; --whatsapp-bg: #064e23;
         }
 
         [data-theme="light"] {
-            --bg-body: #f0f4f8;
-            --bg-sidebar: #ffffff;
-            --bg-card: #ffffff;
-            --bg-box: #f8fafc;
-            --bg-input: #f1f5f9;
-            --border-color: #e2e8f0;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --accent-color: #0284c7;
-            --accent-bg: #e0f2fe;
-            --accent-text: #0c4a6e;
-            --header-bg: rgba(255, 255, 255, 0.95);
+            --bg-body: #f0f4f8; --bg-sidebar: #ffffff; --bg-card: #ffffff;
+            --bg-box: #f8fafc; --bg-input: #f1f5f9; --border-color: #e2e8f0;
+            --text-main: #1e293b; --text-muted: #64748b; --accent-color: #0284c7;
+            --accent-bg: #e0f2fe; --accent-text: #0c4a6e; --header-bg: rgba(255, 255, 255, 0.95);
             --whatsapp-bg: #dcfce7;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            height: 100dvh; 
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-body); color: var(--text-main); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* --- HEADER --- */
         header {
-            background-color: var(--header-bg);
-            backdrop-filter: blur(12px);
-            padding: 0 1.5rem;
-            padding-top: env(safe-area-inset-top);
+            background-color: var(--header-bg); backdrop-filter: blur(12px);
+            padding: 0 1.5rem; padding-top: env(safe-area-inset-top);
             height: calc(60px + env(safe-area-inset-top));
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            z-index: 50;
-            flex-shrink: 0;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color); z-index: 50; flex-shrink: 0;
         }
-
         .header-left { display: flex; align-items: center; gap: 1rem; flex: 1; overflow: hidden; }
-        .menu-toggle { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; display: block; }
+        .menu-toggle { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; }
         .app-title { font-size: 1.15rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; }
         .week-badge { font-size: 0.7rem; background: var(--bg-input); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 700; }
         .theme-toggle { background: none; border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
 
         .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
 
-        /* --- SIDEBAR APPLE FIX --- */
         aside {
-            width: 300px; 
-            background: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
-            display: flex; 
-            flex-direction: column; 
-            z-index: 999; 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 320px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; z-index: 999; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .nav-header { 
-            padding: 1.2rem 1rem; 
-            padding-top: calc(1rem + env(safe-area-inset-top)); 
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0; 
-        }
-
+        /* APPLE SAFE AREA FIX */
+        .nav-header { padding: 1.2rem 1rem; padding-top: calc(1rem + env(safe-area-inset-top)); border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
         .view-toggle { display: flex; background: var(--bg-input); padding: 4px; border-radius: 12px; gap: 4px; }
-        .toggle-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px 2px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+        .toggle-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px 2px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: 0.2s; }
         .toggle-btn.active { background: var(--accent-color); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
         .nav-scroll-area { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
-        .nav-item { padding: 1.2rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
-        .nav-item:hover { background: var(--bg-input); }
+        .nav-item { padding: 1.2rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .nav-item.active { background: var(--accent-bg); border-left: 4px solid var(--accent-color); }
         .nav-item .nav-title { font-weight: 700; font-size: 0.9rem; }
 
-        .sidebar-footer { flex-shrink: 0; padding: 1.5rem; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--border-color); }
+        .sidebar-footer { flex-shrink: 0; padding: 1rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+        .footer-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 0.6rem; border-radius: 0.5rem; font-size: 0.75rem; cursor: pointer; font-weight: 600; text-align: center; }
 
-        /* --- MAIN CONTENT --- */
         main { flex: 1; overflow-y: auto; padding: 1rem; scroll-behavior: smooth; padding-bottom: 120px; }
         .day-group { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 8px solid var(--bg-input); scroll-margin-top: 80px; }
         .day-header { padding: 1rem 0 0.5rem 0; display: flex; align-items: baseline; gap: 0.5rem; }
@@ -141,33 +93,12 @@
         .next-week-container { padding: 2rem 0; text-align: center; }
         .btn-next-week { background-color: var(--bg-input); color: var(--accent-color); border: 1px solid var(--border-color); padding: 1rem 2rem; border-radius: 2rem; font-weight: 700; cursor: pointer; width: 100%; max-width: 300px; }
 
-        /* --- BEAUTIFUL MODAL --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
-        
-        .detail-sheet { 
-            background: var(--bg-card); 
-            width: calc(100% - 24px); 
-            max-width: 600px; 
-            max-height: 85vh; 
-            border-radius: 1.5rem; 
-            position: absolute; 
-            bottom: 12px; 
-            left: 50%; 
-            transform: translateX(-50%) translateY(110%); 
-            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
-            border: 1px solid var(--border-color); 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        .detail-sheet { background: var(--bg-card); width: calc(100% - 24px); max-width: 600px; max-height: 85vh; border-radius: 1.5rem; position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%) translateY(110%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .modal-overlay.active .detail-sheet { transform: translateX(-50%) translateY(0); }
 
-        @media(min-width: 768px) {
-            .detail-sheet { position: relative; bottom: auto; left: auto; transform: scale(0.95); opacity: 0; }
-            .modal-overlay.active .detail-sheet { transform: scale(1); opacity: 1; }
-        }
+        @media(min-width: 768px) { .detail-sheet { position: relative; bottom: auto; left: auto; transform: scale(0.95); opacity: 0; } .modal-overlay.active .detail-sheet { transform: scale(1); opacity: 1; } }
 
         .sheet-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: start; background: var(--bg-box); }
         .sheet-close { background: var(--bg-input); border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-main); cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
@@ -193,7 +124,7 @@
         .hidden { display: none; }
 
         .fab { position: fixed; bottom: calc(2rem + env(safe-area-inset-bottom)); right: 2rem; width: 56px; height: 56px; background: var(--accent-color); color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 90; font-size: 1.5rem; }
-        .backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 35; }
+        .backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 35; backdrop-filter: blur(5px); }
         @media (max-width: 768px) {
             .menu-toggle { display: block; }
             aside { position: fixed; top: 0; left: 0; height: 100dvh; transform: translateX(-100%); }
@@ -225,7 +156,8 @@
             </div>
             <div id="weekList" class="nav-scroll-area"></div>
             <div class="sidebar-footer">
-                <button onclick="adminLogin()" id="adminBtn" class="btn" style="margin-top:0; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">Admin Login</button>
+                <button onclick="toggleNotifications()" id="notifyBtn" class="footer-btn">🔔 Reminders: Off</button>
+                <button onclick="adminLogin()" id="adminBtn" class="footer-btn">Admin Login</button>
             </div>
         </aside>
         <main id="scheduleContainer"><div style="text-align: center; padding-top: 5rem; color: var(--text-muted);">Loading Schedule...</div></main>
@@ -264,18 +196,14 @@
                     <label class="form-label">Name (Required)</label>
                     <select id="inpPresName" class="form-select">
                         <option value="">Choose Name...</option>
-                        <option value="Aina">Aina</option>
-                        <option value="Amy">Amy</option>
-                        <option value="Clarissa">Clarissa</option>
-                        <option value="Danisha">Danisha</option>
-                        <option value="Qaireel">Qaireel</option>
-                        <option value="Sashmitha">Sashmitha</option>
+                        <option value="Aina">Aina</option><option value="Amy">Amy</option><option value="Clarissa">Clarissa</option>
+                        <option value="Danisha">Danisha</option><option value="Qaireel">Qaireel</option><option value="Sashmitha">Sashmitha</option>
                         <option value="Xin Ee">Xin Ee</option>
                     </select>
                 </div>
                 <div class="form-group"><label class="form-label">Case Name (Optional)</label><input type="text" id="inpPresCase" class="form-input"></div>
                 <div class="form-group"><label class="form-label">Key Details (Optional)</label><textarea id="inpPresDetail" class="form-input" rows="4"></textarea></div>
-                <button onclick="submitPresentation()" class="btn btn-primary">Save Entry</button>
+                <button onclick="submitPresentation()" class="btn btn-primary">Save Info</button>
             </div>
         </div>
     </div>
@@ -301,22 +229,14 @@
                 <input type="hidden" id="editId">
                 <div class="form-group"><label class="form-label">Type</label><select id="inpType" class="form-select"><option value="Lecture">Lecture</option><option value="BST">BST</option><option value="Case Discussion">Case Discussion</option><option value="Seminar">Seminar</option><option value="Exam">Exam</option><option value="Custom">Other</option></select></div>
                 <div class="form-group"><label class="form-label">Title</label><input type="text" id="inpTitle" class="form-input"></div>
-                <div class="form-group">
-                    <label class="form-label">Lecturer</label>
-                    <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select>
-                    <div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" style="margin-top:0.5rem"></div>
-                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Phone" style="margin-top:0.5rem">
-                </div>
+                <div class="form-group"><label class="form-label">Lecturer</label><select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select><div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" style="margin-top:0.5rem"></div><input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Phone" style="margin-top:0.5rem"></div>
                 <div class="form-group"><label class="form-label">Date</label><input type="date" id="inpDate" class="form-input"></div>
                 <div class="form-group time-row"><div class="time-block"><label class="form-label">Start</label><input type="time" id="inpStartTime" class="form-input"></div><div class="time-block"><label class="form-label">End</label><input type="time" id="inpEndTime" class="form-input"></div></div>
                 <div class="form-group"><label class="form-label">Venue</label><input type="text" id="inpVenue" class="form-input"></div>
-                <div class="form-group">
-                     <label class="form-label">Week</label>
-                     <select id="inpWeek" class="form-select"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select>
-                </div>
+                <div class="form-group"><label class="form-label">Week</label><select id="inpWeek" class="form-select"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
                 <div class="form-group"><label class="form-label">Notes</label><textarea id="inpNotes" class="form-input"></textarea></div>
                 <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
-                <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Session</button>
+                <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete</button>
             </div>
         </div>
     </div>
@@ -332,6 +252,7 @@
         const groupMembers = ["Aina", "Amy", "Clarissa", "Danisha", "Qaireel", "Sashmitha", "Xin Ee"];
 
         let allEvents = [], currentWeek = 1, viewMode = 'week', currentLecturer = null, currentMember = null, isAdmin = false, currentDetailId = null, currentPresIndex = null;
+        let isNotifyEnabled = localStorage.getItem('notifications') === 'true';
 
         scheduleRef.orderBy("date").orderBy("time").onSnapshot(s => {
             allEvents = s.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -341,22 +262,12 @@
 
         function switchView(m) { 
             viewMode = m; 
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-            const btnId = 'btnView' + m.charAt(0).toUpperCase() + m.slice(1);
-            const targetBtn = document.getElementById(btnId);
-            if(targetBtn) targetBtn.classList.add('active');
-            
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.id === 'btnView' + m.charAt(0).toUpperCase() + m.slice(1)));
+            // Sidebar stays open as requested
             renderSidebarNav(); renderSchedule(); 
         }
-        
-        function toggleSidebar(force) { 
-            const sb = document.getElementById('sidebar'), bd = document.getElementById('backdrop');
-            if (force === true) { sb.classList.add('open'); bd.classList.add('open'); }
-            else if (force === false) { sb.classList.remove('open'); bd.classList.remove('open'); }
-            else { sb.classList.toggle('open'); bd.classList.toggle('open'); }
-        }
-
-        function calculateCurrentWeek() { const s = new Date('2025-12-22T00:00:00'), t = new Date(); return t < s ? 1 : Math.min(8, Math.ceil(Math.ceil(Math.abs(t - s) / (1000*60*60*24)) / 7)); }
+        function toggleSidebar(f) { const s=document.getElementById('sidebar'), b=document.getElementById('backdrop'); if(f===true){s.classList.add('open');b.classList.add('open');}else if(f===false){s.classList.remove('open');b.classList.remove('open');}else{s.classList.toggle('open');b.classList.toggle('open');} }
+        function calculateCurrentWeek() { const s=new Date('2025-12-22T00:00:00'), t=new Date(); return t<s?1:Math.min(8, Math.ceil(Math.ceil(Math.abs(t-s)/(1000*60*60*24))/7)); }
 
         function renderSidebarNav() {
             const list = document.getElementById('weekList'); list.innerHTML = '';
@@ -388,16 +299,10 @@
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer'); container.innerHTML = '';
             let filtered = (viewMode === 'week') ? allEvents.filter(e => e.week == currentWeek) : (viewMode === 'lecturer') ? allEvents.filter(e => e.lecturer === currentLecturer) : allEvents.filter(e => e.presenters && e.presenters.some(p => p.name === currentMember));
-            
             if (viewMode === 'week') document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
             else if (viewMode === 'lecturer' && currentLecturer) document.getElementById('mainHeaderTitle').innerText = currentLecturer;
             else if (viewMode === 'member' && currentMember) document.getElementById('mainHeaderTitle').innerText = "Cases: " + currentMember;
-
-            if(filtered.length === 0) { 
-                container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; 
-                if(viewMode === 'week') appendNextWeekButton(container); return; 
-            }
-            
+            if(filtered.length === 0) { container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; if(viewMode === 'week') appendNextWeekButton(container); return; }
             const grouped = {}; filtered.forEach(e => { if(!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
             Object.keys(grouped).sort().forEach(date => {
                 const dayName = new Date(date).toLocaleDateString('en-US',{weekday:'long'});
@@ -407,13 +312,8 @@
                     const isTBA = t.includes('TBA') || t.includes('TBC') || ev.venue.includes('TBA') || ev.venue.includes('TBC');
                     cards += `<div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')">
                         <div class="time-col"><span class="time-start">${t.split(' ')[0]}</span><span class="time-ampm">${t.split(' ')[1] || ''}</span></div>
-                        <div class="info-col">
-                            <span class="card-type">${ev.type}</span>
-                            <div class="card-title">${ev.title}</div>
-                            <div class="card-meta">${ev.lecturer} • ${ev.venue}</div>
-                            ${isTBA ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}
-                        </div>
-                    </div>`;
+                        <div class="info-col"><span class="card-type">${ev.type}</span><div class="card-title">${ev.title}</div><div class="card-meta">${ev.lecturer} • ${ev.venue}</div>
+                        ${isTBA ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}</div></div>`;
                 });
                 div.innerHTML = `<div class="day-header"><span class="day-name">${dayName}</span><span class="day-date">${date}</span></div>` + cards;
                 container.appendChild(div);
@@ -440,103 +340,76 @@
         });
 
         function openDetail(id) {
-            toggleSidebar(false);
-            currentDetailId = id; const ev = allEvents.find(e => e.id === id); if(!ev) return;
-            document.getElementById('detailType').innerText = ev.type;
-            document.getElementById('detailTitle').innerText = ev.title;
-            document.getElementById('detailTime').innerText = `${ev.time} • ${ev.date}`;
-            document.getElementById('detailLecturer').innerText = ev.lecturer;
-            document.getElementById('detailVenue').innerText = ev.venue;
-            document.getElementById('detailNotes').innerText = ev.notes || "None";
-            
-            const btnGroup = document.getElementById('contactSection'); btnGroup.innerHTML = ''; btnGroup.classList.add('hidden');
+            toggleSidebar(false); currentDetailId = id; const ev = allEvents.find(e => e.id === id); if(!ev) return;
+            document.getElementById('detailType').innerText = ev.type; document.getElementById('detailTitle').innerText = ev.title; document.getElementById('detailTime').innerText = `${ev.time} • ${ev.date}`; document.getElementById('detailLecturer').innerText = ev.lecturer; document.getElementById('detailVenue').innerText = ev.venue; document.getElementById('detailNotes').innerText = ev.notes || "None";
+            const bg = document.getElementById('contactSection'); bg.innerHTML = ''; bg.classList.add('hidden');
             let p = ev.lecturerPhone || lecturerContacts[ev.lecturer];
-            if (p) { btnGroup.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; btnGroup.classList.remove('hidden'); }
-
-            const presSec = document.getElementById('presenterSection'), presList = document.getElementById('presenterList');
-            presList.innerHTML = '';
+            if (p) { bg.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; bg.classList.remove('hidden'); }
+            const ps = document.getElementById('presenterSection'), pl = document.getElementById('presenterList'); pl.innerHTML = '';
             if (ev.type === "BST" || ev.type === "Case Discussion" || ev.type === "Seminar") {
-                presSec.classList.remove('hidden');
-                (ev.presenters || []).forEach((p, idx) => {
+                ps.classList.remove('hidden'); (ev.presenters || []).forEach((p, idx) => {
                     const tag = document.createElement('div'); tag.className = 'presenter-tag'; tag.innerText = p.name;
-                    tag.onclick = () => viewPresenter(idx); presList.appendChild(tag);
+                    tag.onclick = () => viewPresenter(idx); pl.appendChild(tag);
                 });
-            } else { presSec.classList.add('hidden'); }
-            
+            } else { ps.classList.add('hidden'); }
             document.getElementById('detailModal').classList.add('active');
             document.getElementById('editBtn').classList.toggle('hidden', !isAdmin);
         }
 
         function viewPresenter(idx) {
             currentPresIndex = idx; const p = allEvents.find(e => e.id === currentDetailId).presenters[idx];
-            document.getElementById('viewPresName').innerText = p.name;
-            document.getElementById('viewPresCase').innerText = p.caseName || "Registration Only";
-            document.getElementById('viewPresDetail').innerText = p.detail || "No details provided.";
+            document.getElementById('viewPresName').innerText = p.name; document.getElementById('viewPresCase').innerText = p.caseName || "Reservation Only"; document.getElementById('viewPresDetail').innerText = p.detail || "No details provided.";
             document.getElementById('viewPresenterModal').classList.add('active');
         }
 
-        function openPresentForm() {
-            document.getElementById('editPresenterId').value = "";
-            document.getElementById('inpPresName').value = ""; document.getElementById('inpPresCase').value = ""; document.getElementById('inpPresDetail').value = "";
-            document.getElementById('presentFormTitle').innerText = "Register Presentation";
-            document.getElementById('presentFormModal').classList.add('active');
-        }
-
+        function openPresentForm() { document.getElementById('editPresenterId').value = ""; document.getElementById('inpPresName').value = ""; document.getElementById('inpPresCase').value = ""; document.getElementById('inpPresDetail').value = ""; document.getElementById('presentFormModal').classList.add('active'); }
         function openEditPresenter() {
             const p = allEvents.find(e => e.id === currentDetailId).presenters[currentPresIndex];
-            document.getElementById('editPresenterId').value = p.id;
-            document.getElementById('inpPresName').value = p.name; document.getElementById('inpPresCase').value = p.caseName || ""; document.getElementById('inpPresDetail').value = p.detail || "";
-            document.getElementById('presentFormTitle').innerText = "Edit My Case";
+            document.getElementById('editPresenterId').value = p.id; document.getElementById('inpPresName').value = p.name; document.getElementById('inpPresCase').value = p.caseName || ""; document.getElementById('inpPresDetail').value = p.detail || "";
             closeModal('viewPresenterModal'); document.getElementById('presentFormModal').classList.add('active');
         }
-
         async function submitPresentation() {
-            const name = document.getElementById('inpPresName').value, editId = document.getElementById('editPresenterId').value;
-            if(!name) return alert("Select name");
-            let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
-            if(editId) presenters = presenters.map(p => p.id === editId ? {...p, name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value} : p);
-            else presenters.push({ id: Date.now().toString(), name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value });
-            await scheduleRef.doc(currentDetailId).update({ presenters }); closeModal('presentFormModal');
+            const n = document.getElementById('inpPresName').value, e = document.getElementById('editPresenterId').value; if(!n) return alert("Select name");
+            let ps = allEvents.find(ev => ev.id === currentDetailId).presenters || [];
+            if(e) ps = ps.map(p => p.id === e ? {...p, name:n, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value} : p);
+            else ps.push({ id: Date.now().toString(), name:n, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value });
+            await scheduleRef.doc(currentDetailId).update({ presenters: ps }); closeModal('presentFormModal');
         }
+        async function deletePresentation() { if(!confirm("Remove?")) return; let ps = allEvents.find(e => e.id === currentDetailId).presenters || []; ps.splice(currentPresIndex, 1); await scheduleRef.doc(currentDetailId).update({ presenters: ps }); closeModal('viewPresenterModal'); }
 
-        async function deletePresentation() {
-            if(!confirm("Remove registration?")) return;
-            let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
-            presenters.splice(currentPresIndex, 1);
-            await scheduleRef.doc(currentDetailId).update({ presenters }); closeModal('viewPresenterModal');
+        // --- NOTIFICATIONS ---
+        function toggleNotifications() {
+            if (!isNotifyEnabled) {
+                Notification.requestPermission().then(p => { if (p === "granted") { isNotifyEnabled = true; localStorage.setItem('notifications', 'true'); updateNotifyUI(); } });
+            } else { isNotifyEnabled = false; localStorage.setItem('notifications', 'false'); updateNotifyUI(); }
         }
+        function updateNotifyUI() { const b = document.getElementById('notifyBtn'); b.innerText = isNotifyEnabled ? "🔔 Reminders: On" : "🔕 Reminders: Off"; b.style.color = isNotifyEnabled ? "var(--accent-color)" : "var(--text-muted)"; }
+        setInterval(() => {
+            if (!isNotifyEnabled) return; const now = new Date(), today = now.toISOString().split('T')[0], cur = now.getHours()*60 + now.getMinutes();
+            allEvents.filter(e => e.date === today).forEach(ev => {
+                if (!ev.time || ev.time === "TBA") return; const start = getMinutes(ev.time.split(' - ')[0]), diff = start - cur;
+                if (diff > 0 && diff <= 15) { const key = `n_${ev.id}`; if (!localStorage.getItem(key)) { new Notification(`Upcoming: ${ev.title}`, { body: `Starts at ${ev.time.split(' - ')[0]}` }); localStorage.setItem(key, 'true'); } }
+            });
+        }, 60000);
 
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='detailModal') currentDetailId=null; }
-        function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); }
+        // --- ADMIN ---
         function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').style.display = 'flex'; document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
-
-        function convertTo12Hour(t) { if(!t) return ""; let [h, m] = t.split(':'); const a = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${m} ${a}`; }
-        function convertTo24Hour(s) { 
-            if(!s || s === "TBA") return ""; 
-            const p = s.split(' '); 
-            if (p.length < 2) return s; 
-            let [h, m] = p[0].split(':'); 
-            if (h === '12' && p[1] === 'AM') h = '00'; 
-            if (p[1] === 'PM' && h !== '12') h = parseInt(h, 10) + 12; 
-            return `${String(h).padStart(2, '0')}:${m}`; 
-        }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='detailModal') currentDetailId=null; }
+        function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); localStorage.setItem('theme',n); }
+        function convertTo12Hour(t) { let [h, m] = t.split(':'); const a = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${m} ${a}`; }
+        function getMinutes(s) { if(!s) return 9999; const p = s.split(' '); let [h, m] = p[0].split(':').map(Number); if(p[1]==='PM'&&h!==12) h+=12; if(p[1]==='AM'&&h===12) h=0; return (h*60)+m; }
+        function convertTo24Hour(s) { if(!s || s === "TBA") return ""; const p = s.split(' '); if (p.length < 2) return s; let [h, m] = p[0].split(':'); if (h === '12' && p[1] === 'AM') h = '00'; if (p[1] === 'PM' && h !== '12') h = parseInt(h, 10) + 12; return `${String(h).padStart(2, '0')}:${m}`; }
 
         function openEditModal(isEdit = false) {
             const sel = document.getElementById('inpLecturerSelect'); sel.innerHTML = '<option value="">Select Lecturer...</option>'; lecturers.forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
             if(isEdit) {
                 const ev = allEvents.find(e => e.id === currentDetailId);
                 document.getElementById('editId').value = ev.id; document.getElementById('inpType').value = ev.type || "Lecture"; document.getElementById('inpTitle').value = ev.title; document.getElementById('inpDate').value = ev.date; document.getElementById('inpVenue').value = ev.venue; document.getElementById('inpNotes').value = ev.notes || ""; document.getElementById('inpWeek').value = ev.week; document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || "";
-                sel.value = lecturerContacts.hasOwnProperty(ev.lecturer) ? ev.lecturer : "Other"; document.getElementById('divOtherLecturer').classList.toggle('hidden', sel.value !== "Other"); if(sel.value === "Other") document.getElementById('inpLecturerText').value = ev.lecturer;
-                document.getElementById('btnDelete').classList.remove('hidden');
-                if(ev.time && ev.time !== "TBA") { 
-                    const times = ev.time.split(' - ');
-                    document.getElementById('inpStartTime').value = convertTo24Hour(times[0]); 
-                    document.getElementById('inpEndTime').value = convertTo24Hour(times[1]); 
-                }
+                sel.value = lecturerContacts.hasOwnProperty(ev.lecturer) ? ev.lecturer : "Other"; document.getElementById('divOtherLecturer').classList.toggle('hidden', sel.value !== "Other"); if(sel.value === "Other") document.getElementById('inpLecturerText').value = ev.lecturer; document.getElementById('btnDelete').classList.remove('hidden');
+                if(ev.time && ev.time !== "TBA") { const times = ev.time.split(' - '); document.getElementById('inpStartTime').value = convertTo24Hour(times[0]); document.getElementById('inpEndTime').value = convertTo24Hour(times[1]); }
             } else { document.getElementById('editId').value = ""; document.getElementById('inpDate').value = new Date().toISOString().split('T')[0]; document.getElementById('btnDelete').classList.add('hidden'); document.getElementById('inpWeek').value = currentWeek; }
             closeModal('detailModal'); document.getElementById('editModal').classList.add('active');
         }
-
         function editCurrentClass() { openEditModal(true); }
         function checkLecturerSelect() { document.getElementById('divOtherLecturer').classList.toggle('hidden', document.getElementById('inpLecturerSelect').value !== "Other"); }
         async function saveClass() {
@@ -547,7 +420,7 @@
         }
         async function deleteClass() { if(confirm("Delete?")) { await scheduleRef.doc(document.getElementById('editId').value).delete(); closeModal('editModal'); } }
 
-        currentWeek = calculateCurrentWeek(); renderSidebarNav(); renderSchedule();
+        currentWeek = calculateCurrentWeek(); updateNotifyUI(); renderSidebarNav(); renderSchedule();
     </script>
 </body>
 </html>
