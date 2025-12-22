@@ -164,7 +164,7 @@
             padding-bottom: 100px;
         }
 
-        .day-group { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 8px solid var(--bg-input); }
+        .day-group { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 8px solid var(--bg-input); scroll-margin-top: 80px; }
         .day-header { padding: 1rem 0 0.5rem 0; display: flex; align-items: baseline; gap: 0.5rem; }
         .day-name { font-size: 1.5rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; }
         .day-date { font-size: 0.85rem; color: var(--text-muted); }
@@ -220,7 +220,6 @@
         .detail-value { font-size: 1.1rem; }
         .detail-note { background: var(--bg-input); padding: 1rem; border-radius: 0.5rem; border-left: 3px solid var(--accent-color); }
 
-        /* CONTACT & PRESENTER UI */
         .btn-whatsapp { background-color: var(--whatsapp-bg); color: var(--whatsapp-color); border: 1px solid var(--whatsapp-color); padding: 0.8rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; margin-top: 1rem; }
         .presenter-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
         .presenter-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -309,11 +308,11 @@
 
     <div id="presentFormModal" class="modal-overlay">
         <div class="detail-sheet">
-            <div class="sheet-header"><h2 id="presentFormTitle">Presenter Info</h2><button class="sheet-close" onclick="closeModal('presentFormModal')">×</button></div>
+            <div class="sheet-header"><h2 id="presentFormTitle">Presentation Spot</h2><button class="sheet-close" onclick="closeModal('presentFormModal')">×</button></div>
             <div class="sheet-body">
                 <input type="hidden" id="editPresenterId">
                 <div class="form-group"><label class="form-label">Your Name (Required)</label><input type="text" id="inpPresName" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Case Name (Optional)</label><input type="text" id="inpPresCase" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Case Name (Optional)</label><input type="text" id="inpPresCase" class="form-input" placeholder="e.g. Chronic Liver Disease"></div>
                 <div class="form-group"><label class="form-label">Details (Optional)</label><textarea id="inpPresDetail" class="form-input" rows="4"></textarea></div>
                 <button onclick="submitPresentation()" class="btn btn-primary">Save Info</button>
             </div>
@@ -327,8 +326,8 @@
                 <div class="detail-row"><div class="detail-label">Case Name</div><div class="detail-value" id="viewPresCase"></div></div>
                 <div class="detail-row"><div class="detail-label">Details</div><div class="detail-note" id="viewPresDetail"></div></div>
                 <div class="btn-group" style="display:flex; gap:10px; flex-direction:row">
-                    <button class="btn btn-primary" style="flex:1" onclick="openEditPresenter()">Edit</button>
-                    <button class="btn btn-danger" style="flex:1" onclick="deletePresentation()">Remove</button>
+                    <button class="btn btn-primary" style="flex:1" onclick="openEditPresenter()">Edit My Entry</button>
+                    <button class="btn btn-danger" style="flex:1" onclick="deletePresentation()">Remove Me</button>
                 </div>
             </div>
         </div>
@@ -336,7 +335,7 @@
 
     <div id="editModal" class="modal-overlay">
         <div class="detail-sheet">
-            <div class="sheet-header"><h2>Manage Class</h2><button class="sheet-close" onclick="closeModal('editModal')">×</button></div>
+            <div class="sheet-header"><h2>Manage Session</h2><button class="sheet-close" onclick="closeModal('editModal')">×</button></div>
             <div class="sheet-body">
                 <input type="hidden" id="editId">
                 <div class="form-group"><label class="form-label">Type</label><select id="inpType" class="form-select"><option value="Lecture">Lecture</option><option value="BST">BST</option><option value="Case Discussion">Case Discussion</option><option value="Seminar">Seminar</option><option value="Exam">Exam</option><option value="Custom">Other</option></select></div>
@@ -345,21 +344,18 @@
                     <label class="form-label">Lecturer</label>
                     <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select>
                     <div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" style="margin-top:0.5rem"></div>
-                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Phone" style="margin-top:0.5rem">
+                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Custom WhatsApp Phone" style="margin-top:0.5rem">
                 </div>
                 <div class="form-group"><label class="form-label">Date</label><input type="date" id="inpDate" class="form-input"></div>
                 <div class="form-group time-row"><div class="time-block"><label class="form-label">Start</label><input type="time" id="inpStartTime" class="form-input"></div><div class="time-block"><label class="form-label">End</label><input type="time" id="inpEndTime" class="form-input"></div></div>
                 <div class="form-group"><label class="form-label">Venue</label><input type="text" id="inpVenue" class="form-input"></div>
                 <div class="form-group">
-                     <label class="form-label">Week</label>
-                     <select id="inpWeek" class="form-select">
-                         <option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option>
-                         <option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option>
-                         <option value="7">Week 7</option><option value="8">Week 8</option>
-                     </select>
+                    <label class="form-label">Week</label>
+                    <select id="inpWeek" class="form-select"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option><option value="7">Week 7</option><option value="8">Week 8</option></select>
                 </div>
+                <div class="form-group"><label class="form-label">Notes</label><textarea id="inpNotes" class="form-input"></textarea></div>
                 <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
-                <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Class</button>
+                <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Session</button>
             </div>
         </div>
     </div>
@@ -388,7 +384,9 @@
             if(currentDetailId) openDetail(currentDetailId);
         });
 
+        // --- NAVIGATION ---
         function switchView(m) { viewMode = m; toggleSidebar(false); renderSidebarNav(); renderSchedule(); }
+        
         function toggleSidebar(force) { 
             const sb = document.getElementById('sidebar'), bd = document.getElementById('backdrop');
             if (force === false) { sb.classList.remove('open'); bd.classList.remove('open'); }
@@ -407,6 +405,7 @@
                     div.innerHTML = `<div class="nav-title">Week ${i}</div>`;
                     list.appendChild(div);
                 }
+                document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
             } else {
                 const names = new Set(Object.keys(lecturerContacts));
                 allEvents.forEach(e => { if(e.lecturer) names.add(e.lecturer); });
@@ -417,6 +416,7 @@
                     div.innerHTML = `<div class="nav-title">${n}</div>`;
                     list.appendChild(div);
                 });
+                document.getElementById('currentWeekBadge').innerText = "Lecturer";
             }
         }
 
@@ -424,6 +424,9 @@
             const container = document.getElementById('scheduleContainer'); container.innerHTML = '';
             let filtered = viewMode === 'week' ? allEvents.filter(e => e.week == currentWeek) : allEvents.filter(e => e.lecturer === currentLecturer);
             
+            if (viewMode === 'week') document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
+            else if (currentLecturer) document.getElementById('mainHeaderTitle').innerText = currentLecturer;
+
             if(filtered.length === 0) { 
                 container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; 
                 if(viewMode === 'week') appendNextWeekButton(container);
@@ -432,12 +435,14 @@
             
             const grouped = {}; filtered.forEach(e => { if(!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
             Object.keys(grouped).sort().forEach(date => {
-                const div = document.createElement('div'); div.className = 'day-group';
+                const div = document.createElement('div'); 
+                div.className = 'day-group'; 
+                div.dataset.dayName = new Date(date).toLocaleDateString('en-US',{weekday:'long'});
                 let cards = ''; grouped[date].forEach(ev => {
                     const t = ev.time || "TBA";
                     cards += `<div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')"><div class="info-col"><span class="card-type">${ev.type}</span><div class="card-title">${ev.title}</div><div class="card-meta">${t} • ${ev.lecturer}</div></div></div>`;
                 });
-                div.innerHTML = `<div class="day-header"><span class="day-name">${new Date(date).toLocaleDateString('en-US',{weekday:'long'})}</span></div>` + cards;
+                div.innerHTML = `<div class="day-header"><span class="day-name">${div.dataset.dayName}</span><span class="day-date">${date}</span></div>` + cards;
                 container.appendChild(div);
             });
 
@@ -453,13 +458,25 @@
             }
         }
 
-        function nextWeek() { 
-            currentWeek++; 
-            renderSidebarNav(); 
-            renderSchedule(); 
-            document.getElementById('scheduleContainer').scrollTop = 0;
-        }
+        function nextWeek() { currentWeek++; renderSidebarNav(); renderSchedule(); document.getElementById('scheduleContainer').scrollTop = 0; }
 
+        // --- SCROLL LOGIC ---
+        const scrollContainer = document.getElementById('scheduleContainer');
+        scrollContainer.addEventListener('scroll', () => {
+            if (viewMode !== 'week') return;
+            const groups = document.querySelectorAll('.day-group');
+            let found = false;
+            for (const group of groups) {
+                const rect = group.getBoundingClientRect();
+                if (rect.top <= 120 && rect.bottom > 60) {
+                    document.getElementById('mainHeaderTitle').innerText = group.dataset.dayName; 
+                    found = true; break;
+                }
+            }
+            if (!found || scrollContainer.scrollTop < 50) document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
+        });
+
+        // --- DETAILS ---
         function openDetail(id) {
             toggleSidebar(false);
             currentDetailId = id; const ev = allEvents.find(e => e.id === id); if(!ev) return;
@@ -472,10 +489,7 @@
             
             const btnGroup = document.getElementById('contactSection'); btnGroup.innerHTML = '';
             let p = ev.lecturerPhone || lecturerContacts[ev.lecturer];
-            if (p) { 
-                btnGroup.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; 
-                btnGroup.classList.remove('hidden'); 
-            }
+            if (p) { btnGroup.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; btnGroup.classList.remove('hidden'); }
 
             const presSec = document.getElementById('presenterSection'), presList = document.getElementById('presenterList');
             presList.innerHTML = '';
@@ -491,11 +505,12 @@
             document.getElementById('editBtn').classList.toggle('hidden', !isAdmin);
         }
 
+        // --- PRESENTERS ---
         function viewPresenter(idx) {
             currentPresIndex = idx; const p = allEvents.find(e => e.id === currentDetailId).presenters[idx];
             document.getElementById('viewPresName').innerText = p.name;
-            document.getElementById('viewPresCase').innerText = p.caseName || "Unspecified";
-            document.getElementById('viewPresDetail').innerText = p.detail || "None";
+            document.getElementById('viewPresCase').innerText = p.caseName || "Reservation Only";
+            document.getElementById('viewPresDetail').innerText = p.detail || "No details provided yet.";
             document.getElementById('viewPresenterModal').classList.add('active');
         }
 
@@ -522,31 +537,16 @@
         }
 
         async function deletePresentation() {
-            if(!confirm("Remove entry?")) return;
+            if(!confirm("Remove registration?")) return;
             let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
             presenters.splice(currentPresIndex, 1);
             await scheduleRef.doc(currentDetailId).update({ presenters }); closeModal('viewPresenterModal');
         }
 
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        // --- ADMIN ---
         function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').classList.remove('hidden'); document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
-        function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); localStorage.setItem('theme',n); }
-        
-        function convertTo12Hour(time) {
-            let [h, m] = time.split(':');
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            h = h % 12 || 12;
-            return `${h}:${m} ${ampm}`;
-        }
-
-        function convertTo24Hour(timeStr) {
-            if(!timeStr) return "";
-            const [time, modifier] = timeStr.split(' ');
-            let [h, m] = time.split(':');
-            if (h === '12' && modifier === 'AM') h = '00';
-            if (modifier === 'PM' && h !== '12') h = parseInt(h, 10) + 12;
-            return `${String(h).padStart(2, '0')}:${m}`;
-        }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); }
 
         function openEditModal(isEdit = false) {
             const sel = document.getElementById('inpLecturerSelect');
@@ -559,9 +559,7 @@
                 document.getElementById('inpType').value = ev.type || "Lecture"; 
                 document.getElementById('inpTitle').value = ev.title;
                 document.getElementById('inpDate').value = ev.date;
-                document.getElementById('inpStartTime').value = (ev.time && ev.time !== "TBA") ? convertTo24Hour(ev.time.split(' - ')[0]) : "";
-                document.getElementById('inpEndTime').value = (ev.time && ev.time !== "TBA") ? convertTo24Hour(ev.time.split(' - ')[1]) : "";
-                document.getElementById('inpVenue').value = ev.venue === "TBA" ? "" : ev.venue;
+                document.getElementById('inpVenue').value = ev.venue;
                 document.getElementById('inpNotes').value = ev.notes || "";
                 document.getElementById('inpWeek').value = ev.week;
                 document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || "";
@@ -579,7 +577,6 @@
             document.getElementById('editModal').classList.add('active');
         }
 
-        function editCurrentClass() { openEditModal(true); }
         function checkLecturerSelect() { document.getElementById('divOtherLecturer').classList.toggle('hidden', document.getElementById('inpLecturerSelect').value !== "Other"); }
 
         async function saveClass() {
@@ -587,26 +584,16 @@
             let l = document.getElementById('inpLecturerSelect').value;
             if(l === "Other") l = document.getElementById('inpLecturerText').value;
             const start = document.getElementById('inpStartTime').value, end = document.getElementById('inpEndTime').value;
-            let finalTime = (start && end) ? `${convertTo12Hour(start)} - ${convertTo12Hour(end)}` : "TBA";
-            const data = { 
-                title: document.getElementById('inpTitle').value, 
-                lecturer: l, 
-                lecturerPhone: document.getElementById('inpLecturerPhone').value, 
-                date: document.getElementById('inpDate').value, 
-                time: finalTime, 
-                venue: document.getElementById('inpVenue').value || "TBA", 
-                type: document.getElementById('inpType').value, 
-                week: document.getElementById('inpWeek').value,
-                notes: document.getElementById('inpNotes').value
-            };
+            const data = { title: document.getElementById('inpTitle').value, lecturer: l, lecturerPhone: document.getElementById('inpLecturerPhone').value, date: document.getElementById('inpDate').value, time: (start&&end)?`${start}-${end}`:"TBA", venue: document.getElementById('inpVenue').value || "TBA", type: document.getElementById('inpType').value, week: document.getElementById('inpWeek').value, notes: document.getElementById('inpNotes').value };
             if(id) await scheduleRef.doc(id).update(data); else await scheduleRef.add(data);
             closeModal('editModal');
         }
 
         async function deleteClass() { if(confirm("Delete?")) { await scheduleRef.doc(document.getElementById('editId').value).delete(); closeModal('editModal'); } }
 
+        function editCurrentClass() { openEditModal(true); }
         currentWeek = calculateCurrentWeek();
-        renderSidebarNav(); renderSchedule();
+        renderSidebarNav();
     </script>
 </body>
 </html>
