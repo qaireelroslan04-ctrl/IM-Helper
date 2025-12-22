@@ -113,7 +113,6 @@
             flex-shrink: 0; 
         }
 
-        /* NEW VIEW TOGGLE */
         .view-toggle {
             display: flex;
             background: var(--bg-input);
@@ -265,7 +264,6 @@
 
         .detail-sheet {
             background: var(--bg-card);
-            /* Floating Style for Mobile */
             width: calc(100% - 24px); 
             max-width: 600px;
             height: auto;
@@ -319,6 +317,16 @@
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn-whatsapp:hover { opacity: 0.9; }
+        
+        /* PRESENTER SECTION */
+        .presenter-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
+        .presenter-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .presenter-tag { 
+            background: var(--accent-bg); color: var(--accent-text); 
+            padding: 6px 12px; border-radius: 1rem; font-size: 0.85rem; 
+            font-weight: 600; cursor: pointer; border: 1px solid var(--accent-color);
+        }
+
         .admin-booking-box {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
@@ -439,8 +447,57 @@
                 </div>
                 
                 <div id="contactSection" class="btn-group hidden"></div>
+
+                <div id="presenterSection" class="presenter-section hidden">
+                    <div class="detail-label">Students Presenting</div>
+                    <div id="presenterList" class="presenter-list"></div>
+                    <button class="btn btn-primary" onclick="openPresentForm()" style="margin-top: 1rem;">I'm Presenting</button>
+                </div>
                 
-                <button id="editBtn" class="hidden btn btn-primary" onclick="editCurrentClass()">Edit Class</button>
+                <button id="editBtn" class="hidden btn btn-ghost" style="margin-top:1rem" onclick="editCurrentClass()">Edit Class (Admin)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="presentFormModal" class="modal-overlay">
+        <div class="detail-sheet">
+            <div class="sheet-header">
+                <h2>Presenter Info</h2>
+                <button class="sheet-close" onclick="closeModal('presentFormModal')">×</button>
+            </div>
+            <div class="sheet-body">
+                <div class="form-group">
+                    <label class="form-label">Your Name</label>
+                    <input type="text" id="inpPresName" class="form-input" placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Case Name</label>
+                    <input type="text" id="inpPresCase" class="form-input" placeholder="e.g. Chronic Liver Disease">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Key Findings / Details</label>
+                    <textarea id="inpPresDetail" class="form-input" rows="4" placeholder="Brief summary of what you are presenting..."></textarea>
+                </div>
+                <button onclick="submitPresentation()" class="btn btn-primary">Register Presentation</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewPresenterModal" class="modal-overlay">
+        <div class="detail-sheet">
+            <div class="sheet-header">
+                <h2 id="viewPresName">Presenter</h2>
+                <button class="sheet-close" onclick="closeModal('viewPresenterModal')">×</button>
+            </div>
+            <div class="sheet-body">
+                <div class="detail-row">
+                    <div class="detail-label">Case Presenting</div>
+                    <div class="detail-value" id="viewPresCase"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Details</div>
+                    <div class="detail-note" id="viewPresDetail"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -554,7 +611,7 @@
         db.settings({ experimentalForceLongPolling: true });
         const scheduleRef = db.collection("schedule_group_b");
 
-        // --- DATA: LECTURERS & CONTACTS ---
+        // --- DATA: LECTURERS ---
         const lecturerContacts = {
             "Dr Affizal Samsudin": "60176631789",
             "Dr Asri B Said": "60138021143",
@@ -584,9 +641,7 @@
 
         function checkSidebar() {
             const sb = document.getElementById('sidebar');
-            if(sb.classList.contains('open')) {
-                toggleSidebar();
-            }
+            if(sb.classList.contains('open')) toggleSidebar();
         }
 
         function initTheme() {
@@ -635,6 +690,8 @@
             renderSidebarNav();
             if(viewMode === 'week') renderSchedule();
             else if(currentLecturer) renderSchedule();
+            // Re-render open detail if data changed
+            if(currentDetailId) openDetail(currentDetailId);
         });
 
         function renderSidebarNav() {
@@ -687,9 +744,7 @@
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
             container.innerHTML = '';
-            
             let filteredEvents = [];
-
             if (viewMode === 'week') {
                 filteredEvents = allEvents.filter(e => e.week == currentWeek);
                 document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
@@ -704,14 +759,8 @@
                 return getMinutes(a.time) - getMinutes(b.time);
             });
 
-            const todayStr = new Date().toISOString().split('T')[0];
-
             if(filteredEvents.length === 0) {
-                const msg = viewMode === 'week' 
-                    ? `No classes scheduled for Week ${currentWeek}.` 
-                    : `No classes found for ${currentLecturer}.`;
-                container.innerHTML = `<div style="text-align:center; padding: 4rem; color: var(--text-muted);">${msg}</div>`;
-                if(viewMode === 'week') appendNextWeekButton(container);
+                container.innerHTML = `<div style="text-align:center; padding: 4rem; color: var(--text-muted);">No classes found.</div>`;
                 return;
             }
 
@@ -721,57 +770,26 @@
                 grouped[e.date].push(e);
             });
 
+            const todayStr = new Date().toISOString().split('T')[0];
             Object.keys(grouped).forEach(date => {
                 const dateObj = new Date(date);
                 const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
                 const datePretty = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
                 const isToday = date === todayStr;
-
                 const dayBlock = document.createElement('div');
                 dayBlock.className = 'day-group';
                 dayBlock.dataset.dayName = dayName;
                 if(isToday) dayBlock.id = "todayMarker";
-
-                let headerHTML = `
-                    <div class="day-header">
-                        <span class="day-name">${dayName}</span>
-                        <span class="day-date">${datePretty}</span>
-                        ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
-                    </div>
-                `;
-                
+                let headerHTML = `<div class="day-header"><span class="day-name">${dayName}</span><span class="day-date">${datePretty}</span>${isToday ? '<span class="today-badge">TODAY</span>' : ''}</div>`;
                 let cardsHTML = '';
                 grouped[date].forEach(ev => {
-                    const isTBC = ev.time.includes('TBA') || ev.venue.includes('TBA') || ev.time.includes('TBC') || ev.venue.includes('TBC');
                     const timeParts = ev.time && ev.time !== "TBA" ? ev.time.split(' ') : ["TBA", ""]; 
-
-                    cardsHTML += `
-                        <div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')">
-                            <div class="time-col">
-                                <span class="time-start">${timeParts[0]}</span>
-                                <span class="time-ampm">${timeParts[1] || ''}</span>
-                            </div>
-                            <div class="info-col">
-                                <span class="card-type">${ev.type || 'Session'}</span>
-                                <div class="card-title">${ev.title}</div>
-                                <div class="card-meta"><span>${ev.lecturer}</span> • <span>${ev.venue}</span></div>
-                                ${isTBC ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}
-                            </div>
-                        </div>
-                    `;
+                    cardsHTML += `<div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')"><div class="time-col"><span class="time-start">${timeParts[0]}</span><span class="time-ampm">${timeParts[1] || ''}</span></div><div class="info-col"><span class="card-type">${ev.type || 'Session'}</span><div class="card-title">${ev.title}</div><div class="card-meta"><span>${ev.lecturer}</span> • <span>${ev.venue}</span></div></div></div>`;
                 });
                 dayBlock.innerHTML = headerHTML + cardsHTML;
                 container.appendChild(dayBlock);
             });
-            
             if(viewMode === 'week') appendNextWeekButton(container);
-
-            if(viewMode === 'week') {
-                setTimeout(() => {
-                    const el = document.getElementById('todayMarker');
-                    if(el) el.scrollIntoView({behavior: "smooth", block: "center"});
-                }, 500);
-            }
         }
 
         function appendNextWeekButton(container) {
@@ -782,37 +800,15 @@
                 container.appendChild(div);
             }
         }
-        function nextWeek() {
-            currentWeek++;
-            renderSidebarNav();
-            renderSchedule();
-            document.getElementById('scheduleContainer').scrollTop = 0;
-        }
-
-        const mainTitle = document.getElementById('mainHeaderTitle');
-        const scrollContainer = document.getElementById('scheduleContainer');
-
-        scrollContainer.addEventListener('scroll', () => {
-            const groups = document.querySelectorAll('.day-group');
-            let found = false;
-            for (const group of groups) {
-                const rect = group.getBoundingClientRect();
-                if (rect.top <= 120 && rect.bottom > 60) {
-                    mainTitle.innerText = group.dataset.dayName; 
-                    found = true;
-                    break;
-                }
-            }
-            if (!found || scrollContainer.scrollTop < 50) {
-                mainTitle.innerText = "Internal Medicine";
-            }
-        });
+        function nextWeek() { currentWeek++; renderSidebarNav(); renderSchedule(); }
 
         let currentDetailId = null;
         function openDetail(id) {
             checkSidebar(); 
             currentDetailId = id;
             const ev = allEvents.find(e => e.id === id);
+            if(!ev) return;
+
             document.getElementById('detailType').innerText = ev.type || 'SESSION';
             document.getElementById('detailTitle').innerText = ev.title;
             document.getElementById('detailTime').innerText = `${ev.time} • ${ev.date}`;
@@ -820,90 +816,105 @@
             document.getElementById('detailVenue').innerText = ev.venue;
             document.getElementById('detailNotes').innerText = ev.notes || "No additional notes provided.";
             
+            // --- CONTACT SECTION ---
             const btnGroup = document.getElementById('contactSection');
-            btnGroup.innerHTML = ''; 
-            btnGroup.classList.add('hidden');
-
-            // --- CONTACT BUTTON LOGIC ---
-            // 1. Check if Saved Phone Exists OR Fallback to Hardcoded List
-            let phone = ev.lecturerPhone; // Custom saved phone (priority)
-            
-            if (!phone && lecturerContacts[ev.lecturer]) {
-                phone = lecturerContacts[ev.lecturer]; // Hardcoded list (fallback)
-            }
-
+            btnGroup.innerHTML = ''; btnGroup.classList.add('hidden');
+            let phone = ev.lecturerPhone || lecturerContacts[ev.lecturer];
             if (phone) {
-                const cleanPhone = phone.replace(/[^0-9]/g, '');
-                btnGroup.innerHTML += `
-                    <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-whatsapp">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                        WhatsApp Lecturer
-                    </a>
-                `;
+                btnGroup.innerHTML += `<a href="https://wa.me/${phone.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`;
+                btnGroup.classList.remove('hidden');
+            }
+            if (ev.extraPhone) {
+                btnGroup.innerHTML += `<a href="https://wa.me/${ev.extraPhone.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp" style="background:var(--bg-input); border-color:var(--border-color); color:var(--text-main)">WhatsApp Support</a>`;
                 btnGroup.classList.remove('hidden');
             }
 
-            if (ev.extraPhone) {
-                const cleanExtra = ev.extraPhone.replace(/[^0-9]/g, '');
-                btnGroup.innerHTML += `
-                    <a href="https://wa.me/${cleanExtra}" target="_blank" class="btn-whatsapp" style="background:var(--bg-input); border-color:var(--border-color); color:var(--text-main)">
-                         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                        WhatsApp Support
-                    </a>
-                `;
-                btnGroup.classList.remove('hidden');
+            // --- PRESENTER SECTION ---
+            const presSec = document.getElementById('presenterSection');
+            const presList = document.getElementById('presenterList');
+            presList.innerHTML = '';
+            
+            if (ev.type === "BST" || ev.type === "Case Discussion") {
+                presSec.classList.remove('hidden');
+                if (ev.presenters && ev.presenters.length > 0) {
+                    ev.presenters.forEach((p, idx) => {
+                        const tag = document.createElement('div');
+                        tag.className = 'presenter-tag';
+                        tag.innerText = p.name;
+                        tag.onclick = () => viewPresenter(idx);
+                        presList.appendChild(tag);
+                    });
+                } else {
+                    presList.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted)">No students registered yet.</div>';
+                }
+            } else {
+                presSec.classList.add('hidden');
             }
             
             document.getElementById('detailModal').classList.add('active');
-            if(isAdmin) document.getElementById('editBtn').classList.remove('hidden');
-        }
-        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
-
-        function convertTo12Hour(timeStr) {
-            if(!timeStr) return "";
-            let [h, m] = timeStr.split(':');
-            h = parseInt(h);
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            h = h % 12;
-            h = h ? h : 12; 
-            return `${h}:${m} ${ampm}`;
+            document.getElementById('editBtn').classList.toggle('hidden', !isAdmin);
         }
 
-        function convertTo24Hour(timeStr) {
-            if(!timeStr) return "";
-            const [time, modifier] = timeStr.split(' ');
-            if(!time || !modifier) return "";
-            let [hours, minutes] = time.split(':');
-            if (hours === '12') hours = '00';
-            if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
-            return `${String(hours).padStart(2, '0')}:${minutes}`;
+        function closeModal(modalId) { 
+            document.getElementById(modalId).classList.remove('active'); 
+            if(modalId === 'detailModal') currentDetailId = null;
         }
 
+        // --- PRESENTATION LOGIC ---
+        function openPresentForm() {
+            document.getElementById('inpPresName').value = '';
+            document.getElementById('inpPresCase').value = '';
+            document.getElementById('inpPresDetail').value = '';
+            document.getElementById('presentFormModal').classList.add('active');
+        }
+
+        async function submitPresentation() {
+            const name = document.getElementById('inpPresName').value;
+            const caseName = document.getElementById('inpPresCase').value;
+            const detail = document.getElementById('inpPresDetail').value;
+
+            if(!name || !caseName) { alert("Please enter your name and case."); return; }
+
+            const newPresenter = { name, caseName, detail, timestamp: new Date().getTime() };
+
+            try {
+                await scheduleRef.doc(currentDetailId).update({
+                    presenters: firebase.firestore.FieldValue.arrayUnion(newPresenter)
+                });
+                closeModal('presentFormModal');
+                // Session will auto-refresh via snapshot
+            } catch (e) { alert("Error saving: " + e.message); }
+        }
+
+        function viewPresenter(index) {
+            const ev = allEvents.find(e => e.id === currentDetailId);
+            const p = ev.presenters[index];
+            document.getElementById('viewPresName').innerText = p.name;
+            document.getElementById('viewPresCase').innerText = p.caseName;
+            document.getElementById('viewPresDetail').innerText = p.detail || "No details provided.";
+            document.getElementById('viewPresenterModal').classList.add('active');
+        }
+
+        // --- ADMIN LOGIC ---
         function adminLogin() {
             if(isAdmin) {
                 isAdmin = false;
                 document.getElementById('adminBtn').innerText = "Admin Login";
-                document.getElementById('adminBtn').style.color = "var(--text-muted)";
-                document.getElementById('adminBtn').style.borderColor = "var(--border-color)";
                 document.getElementById('fabBtn').classList.add('hidden');
                 document.getElementById('cleanBtn').classList.add('hidden');
                 alert("Logged out.");
             } else {
-                const pass = prompt("Passcode:");
-                if(pass === "admin123") {
+                if(prompt("Passcode:") === "admin123") {
                     isAdmin = true;
                     document.getElementById('adminBtn').innerText = "Logout";
-                    document.getElementById('adminBtn').style.color = "var(--accent-color)";
-                    document.getElementById('adminBtn').style.borderColor = "var(--accent-color)";
                     document.getElementById('fabBtn').classList.remove('hidden');
                     document.getElementById('cleanBtn').classList.remove('hidden');
-                    renderSchedule(); 
-                } else { alert("Wrong."); }
+                    if(currentDetailId) openDetail(currentDetailId);
+                }
             }
         }
 
         function openEditModal(isEdit = false) {
-            checkSidebar(); 
             const sel = document.getElementById('inpLecturerSelect');
             sel.innerHTML = '<option value="">Select Lecturer...</option>';
             lecturers.forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
@@ -914,30 +925,14 @@
                 document.getElementById('inpType').value = ev.type || "Lecture"; 
                 document.getElementById('inpTitle').value = ev.title;
                 document.getElementById('inpDate').value = ev.date;
-                if(ev.time && ev.time !== "TBA") {
-                    const parts = ev.time.split(' - ');
-                    document.getElementById('inpStartTime').value = convertTo24Hour(parts[0]);
-                    if(parts[1]) {
-                        document.getElementById('inpEndTime').value = convertTo24Hour(parts[1]);
-                    }
-                } else {
-                    document.getElementById('inpStartTime').value = "";
-                    document.getElementById('inpEndTime').value = "";
-                }
+                document.getElementById('inpStartTime').value = ev.time !== "TBA" ? convertTo24Hour(ev.time.split(' - ')[0]) : "";
+                document.getElementById('inpEndTime').value = ev.time !== "TBA" ? convertTo24Hour(ev.time.split(' - ')[1]) : "";
                 document.getElementById('inpVenue').value = ev.venue === "TBA" ? "" : ev.venue;
                 document.getElementById('inpNotes').value = ev.notes || "";
                 document.getElementById('inpWeek').value = ev.week;
                 document.getElementById('inpExtraPhone').value = ev.extraPhone || "";
-                
-                // PREFILL PHONE (Priority: Saved > Hardcoded)
-                let existingPhone = ev.lecturerPhone || "";
-                if (!existingPhone && lecturerContacts[ev.lecturer]) {
-                    existingPhone = lecturerContacts[ev.lecturer];
-                }
-                document.getElementById('inpLecturerPhone').value = existingPhone;
+                document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || lecturerContacts[ev.lecturer] || "";
 
-                document.getElementById('btnDelete').classList.remove('hidden');
-                
                 if(lecturerContacts.hasOwnProperty(ev.lecturer)) {
                     sel.value = ev.lecturer;
                     document.getElementById('divOtherLecturer').classList.add('hidden');
@@ -946,28 +941,13 @@
                     document.getElementById('divOtherLecturer').classList.remove('hidden');
                     document.getElementById('inpLecturerText').value = ev.lecturer;
                 }
+                document.getElementById('btnDelete').classList.remove('hidden');
             } else {
                 document.getElementById('editId').value = "";
-                document.getElementById('inpType').value = "Lecture"; 
                 document.getElementById('inpTitle').value = "";
-                
-                const today = new Date();
-                const nextYear = today.getFullYear() + 1;
-                const defaultDate = today.getMonth() === 11 ? `${nextYear}-01-01` : today.toISOString().split('T')[0];
-                document.getElementById('inpDate').value = defaultDate;
-
-                document.getElementById('inpStartTime').value = "09:00"; 
-                document.getElementById('inpEndTime').value = "10:00";   
+                document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
                 document.getElementById('inpVenue').value = "";
-                document.getElementById('inpNotes').value = "";
-                document.getElementById('inpWeek').value = currentWeek;
-                document.getElementById('inpExtraPhone').value = "";
-                document.getElementById('inpLecturerPhone').value = "";
-                
                 document.getElementById('btnDelete').classList.add('hidden');
-                sel.value = "";
-                document.getElementById('divOtherLecturer').classList.add('hidden');
-                document.getElementById('inpLecturerText').value = "";
             }
             closeModal('detailModal');
             document.getElementById('editModal').classList.add('active');
@@ -975,34 +955,22 @@
 
         function checkLecturerSelect() {
             const val = document.getElementById('inpLecturerSelect').value;
-            const div = document.getElementById('divOtherLecturer');
-            if(val === "Other") div.classList.remove('hidden');
-            else div.classList.add('hidden');
+            document.getElementById('divOtherLecturer').classList.toggle('hidden', val !== "Other");
         }
-        function editCurrentClass() { openEditModal(true); }
-        
+
         async function saveClass() {
             const id = document.getElementById('editId').value;
             let lect = document.getElementById('inpLecturerSelect').value;
-            
-            if(lect === "Other") {
-                lect = document.getElementById('inpLecturerText').value;
-            }
+            if(lect === "Other") lect = document.getElementById('inpLecturerText').value;
             
             const start24 = document.getElementById('inpStartTime').value;
             const end24 = document.getElementById('inpEndTime').value;
-            let finalTime = "TBA";
-
-            if (start24 && end24) {
-                const start12 = convertTo12Hour(start24);
-                const end12 = convertTo12Hour(end24);
-                finalTime = `${start12} - ${end12}`;
-            }
+            let finalTime = (start24 && end24) ? `${convertTo12Hour(start24)} - ${convertTo12Hour(end24)}` : "TBA";
 
             const data = {
                 title: document.getElementById('inpTitle').value,
                 lecturer: lect,
-                lecturerPhone: document.getElementById('inpLecturerPhone').value, // Save for ANY lecturer
+                lecturerPhone: document.getElementById('inpLecturerPhone').value,
                 extraPhone: document.getElementById('inpExtraPhone').value, 
                 date: document.getElementById('inpDate').value,
                 time: finalTime, 
@@ -1018,17 +986,31 @@
 
         async function deleteClass() {
             if(confirm("Delete this session?")) {
-                const id = document.getElementById('editId').value;
-                await scheduleRef.doc(id).delete();
+                await scheduleRef.doc(document.getElementById('editId').value).delete();
                 closeModal('editModal');
             }
         }
+
+        function convertTo12Hour(time) {
+            let [h, m] = time.split(':');
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+
+        function convertTo24Hour(timeStr) {
+            if(!timeStr) return "";
+            const [time, modifier] = timeStr.split(' ');
+            let [h, m] = time.split(':');
+            if (h === '12') h = '00';
+            if (modifier === 'PM') h = parseInt(h, 10) + 12;
+            return `${String(h).padStart(2, '0')}:${m}`;
+        }
+
+        function editCurrentClass() { openEditModal(true); }
+        async function cleanDB() { if(confirm("Reset entire database?")) alert("Reset restricted."); }
         currentWeek = calculateCurrentWeek();
         renderSidebarNav();
-        async function cleanDB() { if(!confirm("Reset?")) return; alert("Reset placeholder."); }
-        const styleSheet = document.createElement("style");
-        styleSheet.innerText = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
-        document.head.appendChild(styleSheet);
     </script>
 </body>
 </html>
