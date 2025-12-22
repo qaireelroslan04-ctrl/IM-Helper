@@ -78,9 +78,9 @@
 
         .header-left { display: flex; align-items: center; gap: 1rem; flex: 1; overflow: hidden; }
         .menu-toggle { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; display: block; }
-        .app-title { font-size: 1.1rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; }
+        .app-title { font-size: 1.15rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; }
         .week-badge { font-size: 0.7rem; background: var(--bg-input); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 700; }
-        .theme-toggle { background: none; border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .theme-toggle { background: none; border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
 
         .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
 
@@ -97,14 +97,14 @@
 
         .nav-header { 
             padding: 1.2rem 1rem; 
-            padding-top: calc(1rem + env(safe-area-inset-top)); 
+            padding-top: calc(1.2rem + env(safe-area-inset-top)); 
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0; 
         }
 
         .view-toggle { display: flex; background: var(--bg-input); padding: 4px; border-radius: 12px; gap: 4px; }
-        .toggle-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; }
-        .toggle-btn.active { background: var(--accent-color); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .toggle-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px 2px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; }
+        .toggle-btn.active { background: var(--accent-color); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
         .nav-scroll-area { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
         .nav-item { padding: 1.2rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
@@ -142,10 +142,27 @@
         .next-week-container { padding: 2rem 0; text-align: center; }
         .btn-next-week { background-color: var(--bg-input); color: var(--accent-color); border: 1px solid var(--border-color); padding: 1rem 2rem; border-radius: 2rem; font-weight: 700; cursor: pointer; width: 100%; max-width: 300px; }
 
-        /* --- MODALS --- */
+        /* --- BEAUTIFUL MODAL --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
-        .detail-sheet { background: var(--bg-card); width: calc(100% - 24px); max-width: 600px; max-height: 85vh; border-radius: 1.5rem; position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%) translateY(110%); transition: transform 0.3s; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; }
+        
+        .detail-sheet { 
+            background: var(--bg-card); 
+            width: calc(100% - 24px); 
+            max-width: 600px; 
+            max-height: 85vh; 
+            border-radius: 1.5rem; 
+            position: absolute; 
+            bottom: 12px; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(110%); 
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
+            border: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
         .modal-overlay.active .detail-sheet { transform: translateX(-50%) translateY(0); }
 
         @media(min-width: 768px) {
@@ -153,9 +170,14 @@
             .modal-overlay.active .detail-sheet { transform: scale(1); opacity: 1; }
         }
 
-        .sheet-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: start; }
-        .sheet-close { background: var(--bg-input); border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-main); cursor: pointer; font-size: 1.2rem; }
-        .sheet-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
+        .sheet-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: start; background: var(--bg-box); }
+        .sheet-close { background: var(--bg-input); border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-main); cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        .sheet-body { flex: 1; overflow-y: auto; padding: 1.5rem; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+
+        .detail-row { margin-bottom: 1.5rem; }
+        .detail-label { font-size: 0.75rem; text-transform: uppercase; color: var(--accent-color); font-weight: 700; margin-bottom: 0.5rem; }
+        .detail-value { font-size: 1.1rem; }
+        .detail-note { background: var(--bg-input); padding: 1rem; border-radius: 0.5rem; border-left: 3px solid var(--accent-color); font-size: 0.95rem; }
 
         .btn-whatsapp { background-color: var(--whatsapp-bg); color: var(--whatsapp-color); border: 1px solid var(--whatsapp-color); padding: 0.8rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; margin-top: 1rem; }
         .presenter-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
@@ -168,6 +190,7 @@
         .btn { padding: 0.8rem 1.5rem; border-radius: 0.5rem; font-weight: 700; border: none; cursor: pointer; width: 100%; margin-top: 1rem; }
         .btn-primary { background: var(--accent-color); color: white; }
         .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; border: 1px solid #ef4444; }
+        .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
         .hidden { display: none; }
 
         .fab { position: fixed; bottom: calc(2rem + env(safe-area-inset-bottom)); right: 2rem; width: 56px; height: 56px; background: var(--accent-color); color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 90; font-size: 1.5rem; }
@@ -235,13 +258,13 @@
 
     <div id="presentFormModal" class="modal-overlay">
         <div class="detail-sheet">
-            <div class="sheet-header"><h2 id="presentFormTitle">Presentation Spot</h2><button class="sheet-close" onclick="closeModal('presentFormModal')">×</button></div>
+            <div class="sheet-header"><h2 id="presentFormTitle">Register Presenter</h2><button class="sheet-close" onclick="closeModal('presentFormModal')">×</button></div>
             <div class="sheet-body">
                 <input type="hidden" id="editPresenterId">
-                <div class="form-group"><label class="form-label">Name</label><select id="inpPresName" class="form-select"><option value="">Choose...</option><option value="Aina">Aina</option><option value="Amy">Amy</option><option value="Clarissa">Clarissa</option><option value="Danisha">Danisha</option><option value="Qaireel">Qaireel</option><option value="Sashmitha">Sashmitha</option><option value="Xin Ee">Xin Ee</option></select></div>
+                <div class="form-group"><label class="form-label">Name (Required)</label><select id="inpPresName" class="form-select"><option value="">Choose...</option><option value="Aina">Aina</option><option value="Amy">Amy</option><option value="Clarissa">Clarissa</option><option value="Danisha">Danisha</option><option value="Qaireel">Qaireel</option><option value="Sashmitha">Sashmitha</option><option value="Xin Ee">Xin Ee</option></select></div>
                 <div class="form-group"><label class="form-label">Case Name (Optional)</label><input type="text" id="inpPresCase" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Details (Optional)</label><textarea id="inpPresDetail" class="form-input" rows="4"></textarea></div>
-                <button onclick="submitPresentation()" class="btn btn-primary">Save Entry</button>
+                <div class="form-group"><label class="form-label">Key Details (Optional)</label><textarea id="inpPresDetail" class="form-input" rows="4"></textarea></div>
+                <button onclick="submitPresentation()" class="btn btn-primary">Save Info</button>
             </div>
         </div>
     </div>
@@ -267,7 +290,12 @@
                 <input type="hidden" id="editId">
                 <div class="form-group"><label class="form-label">Type</label><select id="inpType" class="form-select"><option value="Lecture">Lecture</option><option value="BST">BST</option><option value="Case Discussion">Case Discussion</option><option value="Seminar">Seminar</option><option value="Exam">Exam</option><option value="Custom">Other</option></select></div>
                 <div class="form-group"><label class="form-label">Title</label><input type="text" id="inpTitle" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Lecturer</label><select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select><div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" style="margin-top:0.5rem"></div><input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Phone" style="margin-top:0.5rem"></div>
+                <div class="form-group">
+                    <label class="form-label">Lecturer</label>
+                    <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select>
+                    <div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" style="margin-top:0.5rem"></div>
+                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Phone" style="margin-top:0.5rem">
+                </div>
                 <div class="form-group"><label class="form-label">Date</label><input type="date" id="inpDate" class="form-input"></div>
                 <div class="form-group time-row"><div class="time-block"><label class="form-label">Start</label><input type="time" id="inpStartTime" class="form-input"></div><div class="time-block"><label class="form-label">End</label><input type="time" id="inpEndTime" class="form-input"></div></div>
                 <div class="form-group"><label class="form-label">Venue</label><input type="text" id="inpVenue" class="form-input"></div>
@@ -335,10 +363,13 @@
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer'); container.innerHTML = '';
             let filtered = (viewMode === 'week') ? allEvents.filter(e => e.week == currentWeek) : (viewMode === 'lecturer') ? allEvents.filter(e => e.lecturer === currentLecturer) : allEvents.filter(e => e.presenters && e.presenters.some(p => p.name === currentMember));
+            
             if (viewMode === 'week') document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
             else if (viewMode === 'lecturer' && currentLecturer) document.getElementById('mainHeaderTitle').innerText = currentLecturer;
             else if (viewMode === 'group' && currentMember) document.getElementById('mainHeaderTitle').innerText = "Cases: " + currentMember;
+
             if(filtered.length === 0) { container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; if(viewMode === 'week') appendNextWeekButton(container); return; }
+            
             const grouped = {}; filtered.forEach(e => { if(!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
             Object.keys(grouped).sort().forEach(date => {
                 const dayName = new Date(date).toLocaleDateString('en-US',{weekday:'long'});
@@ -348,8 +379,13 @@
                     const isTBA = t.includes('TBA') || t.includes('TBC') || ev.venue.includes('TBA') || ev.venue.includes('TBC');
                     cards += `<div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')">
                         <div class="time-col"><span class="time-start">${t.split(' ')[0]}</span><span class="time-ampm">${t.split(' ')[1] || ''}</span></div>
-                        <div class="info-col"><span class="card-type">${ev.type}</span><div class="card-title">${ev.title}</div><div class="card-meta">${ev.lecturer} • ${ev.venue}</div>
-                        ${isTBA ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}</div></div>`;
+                        <div class="info-col">
+                            <span class="card-type">${ev.type}</span>
+                            <div class="card-title">${ev.title}</div>
+                            <div class="card-meta">${ev.lecturer} • ${ev.venue}</div>
+                            ${isTBA ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}
+                        </div>
+                    </div>`;
                 });
                 div.innerHTML = `<div class="day-header"><span class="day-name">${dayName}</span><span class="day-date">${date}</span></div>` + cards;
                 container.appendChild(div);
@@ -357,7 +393,13 @@
             if(viewMode === 'week') appendNextWeekButton(container);
         }
 
-        function appendNextWeekButton(c) { if (currentWeek < 8) { const d = document.createElement('div'); d.className = 'next-week-container'; d.innerHTML = `<button class="btn-next-week" onclick="nextWeek()">Load Next Week ↓</button>`; c.appendChild(d); } }
+        function appendNextWeekButton(container) {
+            if (currentWeek < 8) {
+                const div = document.createElement('div'); div.className = 'next-week-container';
+                div.innerHTML = `<button class="btn-next-week" onclick="nextWeek()">Load Next Week ↓</button>`;
+                container.appendChild(div);
+            }
+        }
         function nextWeek() { currentWeek++; renderSidebarNav(); renderSchedule(); document.getElementById('scheduleContainer').scrollTop = 0; }
 
         document.getElementById('scheduleContainer').addEventListener('scroll', () => {
@@ -371,59 +413,99 @@
         });
 
         function openDetail(id) {
-            toggleSidebar(false); currentDetailId = id; const ev = allEvents.find(e => e.id === id); if(!ev) return;
-            document.getElementById('detailType').innerText = ev.type; document.getElementById('detailTitle').innerText = ev.title; document.getElementById('detailTime').innerText = `${ev.time} • ${ev.date}`; document.getElementById('detailLecturer').innerText = ev.lecturer; document.getElementById('detailVenue').innerText = ev.venue; document.getElementById('detailNotes').innerText = ev.notes || "None";
-            const bg = document.getElementById('contactSection'); bg.innerHTML = ''; bg.classList.add('hidden');
+            toggleSidebar(false);
+            currentDetailId = id; const ev = allEvents.find(e => e.id === id); if(!ev) return;
+            document.getElementById('detailType').innerText = ev.type;
+            document.getElementById('detailTitle').innerText = ev.title;
+            document.getElementById('detailTime').innerText = `${ev.time} • ${ev.date}`;
+            document.getElementById('detailLecturer').innerText = ev.lecturer;
+            document.getElementById('detailVenue').innerText = ev.venue;
+            document.getElementById('detailNotes').innerText = ev.notes || "None";
+            
+            const btnGroup = document.getElementById('contactSection'); btnGroup.innerHTML = ''; btnGroup.classList.add('hidden');
             let p = ev.lecturerPhone || lecturerContacts[ev.lecturer];
-            if (p) { bg.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; bg.classList.remove('hidden'); }
-            const ps = document.getElementById('presenterSection'), pl = document.getElementById('presenterList'); pl.innerHTML = '';
+            if (p) { btnGroup.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; btnGroup.classList.remove('hidden'); }
+
+            const presSec = document.getElementById('presenterSection'), presList = document.getElementById('presenterList');
+            presList.innerHTML = '';
             if (ev.type === "BST" || ev.type === "Case Discussion" || ev.type === "Seminar") {
-                ps.classList.remove('hidden');
+                presSec.classList.remove('hidden');
                 (ev.presenters || []).forEach((p, idx) => {
                     const tag = document.createElement('div'); tag.className = 'presenter-tag'; tag.innerText = p.name;
-                    tag.onclick = () => viewPresenter(idx); pl.appendChild(tag);
+                    tag.onclick = () => viewPresenter(idx); presList.appendChild(tag);
                 });
-            } else { ps.classList.add('hidden'); }
+            } else { presSec.classList.add('hidden'); }
+            
             document.getElementById('detailModal').classList.add('active');
             document.getElementById('editBtn').classList.toggle('hidden', !isAdmin);
         }
 
         function viewPresenter(idx) {
             currentPresIndex = idx; const p = allEvents.find(e => e.id === currentDetailId).presenters[idx];
-            document.getElementById('viewPresName').innerText = p.name; document.getElementById('viewPresCase').innerText = p.caseName || "Registration Only"; document.getElementById('viewPresDetail').innerText = p.detail || "No details provided.";
+            document.getElementById('viewPresName').innerText = p.name;
+            document.getElementById('viewPresCase').innerText = p.caseName || "Unspecified (Spot Only)";
+            document.getElementById('viewPresDetail').innerText = p.detail || "No details provided.";
             document.getElementById('viewPresenterModal').classList.add('active');
         }
 
-        function openPresentForm() { document.getElementById('editPresenterId').value = ""; document.getElementById('inpPresName').value = ""; document.getElementById('inpPresCase').value = ""; document.getElementById('inpPresDetail').value = ""; document.getElementById('presentFormModal').classList.add('active'); }
+        function openPresentForm() {
+            document.getElementById('editPresenterId').value = "";
+            document.getElementById('inpPresName').value = ""; document.getElementById('inpPresCase').value = ""; document.getElementById('inpPresDetail').value = "";
+            document.getElementById('presentFormTitle').innerText = "Register Presentation";
+            document.getElementById('presentFormModal').classList.add('active');
+        }
+
         function openEditPresenter() {
             const p = allEvents.find(e => e.id === currentDetailId).presenters[currentPresIndex];
-            document.getElementById('editPresenterId').value = p.id; document.getElementById('inpPresName').value = p.name; document.getElementById('inpPresCase').value = p.caseName || ""; document.getElementById('inpPresDetail').value = p.detail || "";
+            document.getElementById('editPresenterId').value = p.id;
+            document.getElementById('inpPresName').value = p.name; document.getElementById('inpPresCase').value = p.caseName || ""; document.getElementById('inpPresDetail').value = p.detail || "";
+            document.getElementById('presentFormTitle').innerText = "Edit My Case";
             closeModal('viewPresenterModal'); document.getElementById('presentFormModal').classList.add('active');
         }
 
         async function submitPresentation() {
-            const n = document.getElementById('inpPresName').value, e = document.getElementById('editPresenterId').value; if(!n) return alert("Select name");
-            let ps = allEvents.find(ev => ev.id === currentDetailId).presenters || [];
-            if(e) ps = ps.map(p => p.id === e ? {...p, name:n, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value} : p);
-            else ps.push({ id: Date.now().toString(), name:n, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value });
-            await scheduleRef.doc(currentDetailId).update({ presenters: ps }); closeModal('presentFormModal');
+            const name = document.getElementById('inpPresName').value, editId = document.getElementById('editPresenterId').value;
+            if(!name) return alert("Select name");
+            let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
+            if(editId) presenters = presenters.map(p => p.id === editId ? {...p, name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value} : p);
+            else presenters.push({ id: Date.now().toString(), name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value });
+            await scheduleRef.doc(currentDetailId).update({ presenters }); closeModal('presentFormModal');
         }
 
-        async function deletePresentation() { if(!confirm("Remove registration?")) return; let ps = allEvents.find(e => e.id === currentDetailId).presenters || []; ps.splice(currentPresIndex, 1); await scheduleRef.doc(currentDetailId).update({ presenters: ps }); closeModal('viewPresenterModal'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='detailModal') currentDetailId=null; }
-        function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').style.display = 'flex'; document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
-        function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); }
+        async function deletePresentation() {
+            if(!confirm("Remove?")) return;
+            let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
+            presenters.splice(currentPresIndex, 1);
+            await scheduleRef.doc(currentDetailId).update({ presenters }); closeModal('viewPresenterModal');
+        }
 
-        function convertTo12Hour(t) { let [h, m] = t.split(':'); const a = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${m} ${a}`; }
-        function convertTo24Hour(s) { if(!s) return ""; const p = s.split(' '); if (p.length < 2) return s; let [h, m] = p[0].split(':'); if (h === '12' && p[1] === 'AM') h = '00'; if (p[1] === 'PM' && h !== '12') h = parseInt(h, 10) + 12; return `${String(h).padStart(2, '0')}:${m}`; }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='detailModal') currentDetailId=null; }
+        function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); }
+        function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').style.display = 'flex'; document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
+
+        function convertTo12Hour(t) { if(!t) return ""; let [h, m] = t.split(':'); const a = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${m} ${a}`; }
+        function convertTo24Hour(s) { 
+            if(!s || s === "TBA") return ""; 
+            const p = s.split(' '); 
+            if (p.length < 2) return s; 
+            let [h, m] = p[0].split(':'); 
+            if (h === '12' && p[1] === 'AM') h = '00'; 
+            if (p[1] === 'PM' && h !== '12') h = parseInt(h, 10) + 12; 
+            return `${String(h).padStart(2, '0')}:${m}`; 
+        }
 
         function openEditModal(isEdit = false) {
             const sel = document.getElementById('inpLecturerSelect'); sel.innerHTML = '<option value="">Select Lecturer...</option>'; lecturers.forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
             if(isEdit) {
                 const ev = allEvents.find(e => e.id === currentDetailId);
                 document.getElementById('editId').value = ev.id; document.getElementById('inpType').value = ev.type || "Lecture"; document.getElementById('inpTitle').value = ev.title; document.getElementById('inpDate').value = ev.date; document.getElementById('inpVenue').value = ev.venue; document.getElementById('inpNotes').value = ev.notes || ""; document.getElementById('inpWeek').value = ev.week; document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || "";
-                sel.value = lecturerContacts.hasOwnProperty(ev.lecturer) ? ev.lecturer : "Other"; document.getElementById('divOtherLecturer').classList.toggle('hidden', sel.value !== "Other"); if(sel.value === "Other") document.getElementById('inpLecturerText').value = ev.lecturer; document.getElementById('btnDelete').classList.remove('hidden');
-                if(ev.time && ev.time !== "TBA") { document.getElementById('inpStartTime').value = convertTo24Hour(ev.time.split(' - ')[0]); document.getElementById('inpEndTime').value = convertTo24Hour(ev.time.split(' - ')[1]); }
+                sel.value = lecturerContacts.hasOwnProperty(ev.lecturer) ? ev.lecturer : "Other"; document.getElementById('divOtherLecturer').classList.toggle('hidden', sel.value !== "Other"); if(sel.value === "Other") document.getElementById('inpLecturerText').value = ev.lecturer;
+                document.getElementById('btnDelete').classList.remove('hidden');
+                if(ev.time && ev.time !== "TBA") { 
+                    const times = ev.time.split(' - ');
+                    document.getElementById('inpStartTime').value = convertTo24Hour(times[0]); 
+                    document.getElementById('inpEndTime').value = convertTo24Hour(times[1]); 
+                }
             } else { document.getElementById('editId').value = ""; document.getElementById('inpDate').value = new Date().toISOString().split('T')[0]; document.getElementById('btnDelete').classList.add('hidden'); document.getElementById('inpWeek').value = currentWeek; }
             closeModal('detailModal'); document.getElementById('editModal').classList.add('active');
         }
