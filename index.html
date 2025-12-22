@@ -1,685 +1,1018 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Internal Medicine Timetable</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Internal Medicine Timetable</title>
 
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <style>
-        /* --- CSS VARIABLES --- */
-        :root {
-            --bg-body: #000000;
-            --bg-sidebar: #050505;
-            --bg-card: #0a0a0a;
-            --bg-box: #111111;
-            --bg-input: #171717;
-            --border-color: #27272a;
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-            --accent-color: #3b82f6;
-            --accent-bg: #172554;
-            --accent-text: #bfdbfe;
-            --header-bg: rgba(0, 0, 0, 0.85);
-            --status-yellow: #d97706;
-            --whatsapp-color: #25D366;
-            --whatsapp-bg: #064e23;
-        }
+    <style>
+        /* --- CSS VARIABLES --- */
+        :root {
+            --bg-body: #000000;
+            --bg-sidebar: #050505;
+            --bg-card: #0a0a0a;
+            --bg-box: #111111;
+            --bg-input: #171717;
+            --border-color: #27272a;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-color: #3b82f6;
+            --accent-bg: #172554;
+            --accent-text: #bfdbfe;
+            --header-bg: rgba(0, 0, 0, 0.85);
+            --status-yellow: #d97706;
+            --whatsapp-color: #25D366;
+            --whatsapp-bg: #064e23;
+        }
 
-        [data-theme="light"] {
-            --bg-body: #f0f4f8;
-            --bg-sidebar: #ffffff;
-            --bg-card: #ffffff;
-            --bg-box: #f8fafc;
-            --bg-input: #f1f5f9;
-            --border-color: #e2e8f0;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --accent-color: #0284c7;
-            --accent-bg: #e0f2fe;
-            --accent-text: #0c4a6e;
-            --header-bg: rgba(255, 255, 255, 0.95);
-            --whatsapp-bg: #dcfce7;
-        }
+        [data-theme="light"] {
+            --bg-body: #f0f4f8;
+            --bg-sidebar: #ffffff;
+            --bg-card: #ffffff;
+            --bg-box: #f8fafc;
+            --bg-input: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-color: #0284c7;
+            --accent-bg: #e0f2fe;
+            --accent-text: #0c4a6e;
+            --header-bg: rgba(255, 255, 255, 0.95);
+            --whatsapp-bg: #dcfce7;
+        }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            height: 100dvh; 
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100dvh; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-        /* --- HEADER --- */
-        header {
-            background-color: var(--header-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 0 1.5rem;
-            padding-top: env(safe-area-inset-top);
-            height: calc(60px + env(safe-area-inset-top));
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            z-index: 50;
-            flex-shrink: 0;
-        }
+        /* --- HEADER --- */
+        header {
+            background-color: var(--header-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 0 1.5rem;
+            padding-top: env(safe-area-inset-top);
+            height: calc(60px + env(safe-area-inset-top));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 50;
+            flex-shrink: 0;
+        }
 
-        .header-left { display: flex; align-items: center; gap: 1rem; flex: 1; overflow: hidden; }
-        .menu-toggle { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; display: none; }
-        .app-title { font-size: 1.25rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; }
-        .week-badge { 
-            font-size: 0.75rem; background: var(--bg-input); padding: 2px 8px; 
-            border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted);
-            text-transform: uppercase; font-weight: 700;
-        }
-        
-        .theme-toggle {
-            background: none; border: 1px solid var(--border-color); color: var(--text-main);
-            cursor: pointer; padding: 0.5rem; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
-        }
-        .theme-toggle svg { width: 20px; height: 20px; fill: currentColor; }
+        .header-left { display: flex; align-items: center; gap: 1rem; flex: 1; overflow: hidden; }
+        .menu-toggle { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; display: none; }
+        .app-title { font-size: 1.25rem; font-weight: 800; color: var(--accent-color); white-space: nowrap; }
+        .week-badge { 
+            font-size: 0.75rem; background: var(--bg-input); padding: 2px 8px; 
+            border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted);
+            text-transform: uppercase; font-weight: 700;
+        }
+        
+        .theme-toggle {
+            background: none; border: 1px solid var(--border-color); color: var(--text-main);
+            cursor: pointer; padding: 0.5rem; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+        }
+        .theme-toggle svg { width: 20px; height: 20px; fill: currentColor; }
 
-        /* --- LAYOUT --- */
-        .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
+        /* --- LAYOUT --- */
+        .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
 
-        /* --- SIDEBAR --- */
-        aside {
-            width: 300px; 
-            background: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
-            display: flex; 
-            flex-direction: column; 
-            z-index: 999; 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        /* --- SIDEBAR --- */
+        aside {
+            width: 300px; 
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex; 
+            flex-direction: column; 
+            z-index: 999; 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-        .nav-header { 
-            padding: 1rem 1.5rem; 
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0; 
-        }
+        .nav-header { 
+            padding: 1rem 1.5rem; 
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0; 
+        }
 
-        .view-toggle {
-            display: flex;
-            background: var(--bg-input);
-            padding: 4px;
-            border-radius: 8px;
-            gap: 4px;
-        }
-        .toggle-btn {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 8px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-        .toggle-btn.active {
-            background: var(--accent-color);
-            color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
+        .view-toggle {
+            display: flex;
+            background: var(--bg-input);
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+        .toggle-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
 
-        .nav-scroll-area {
-            flex: 1; 
-            overflow-y: auto; 
-            overscroll-behavior: contain;
-        }
-        .nav-scroll-area::-webkit-scrollbar { width: 0px; background: transparent; }
+        .nav-scroll-area {
+            flex: 1; 
+            overflow-y: auto; 
+            overscroll-behavior: contain;
+        }
+        .nav-scroll-area::-webkit-scrollbar { width: 0px; background: transparent; }
 
-        .nav-item {
-            padding: 1rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color);
-            transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;
-        }
-        .nav-item:hover { background: var(--bg-input); }
-        .nav-item.active { background: var(--accent-bg); border-left: 4px solid var(--accent-color); }
-        .nav-item .nav-title { font-weight: 600; font-size: 0.95rem; }
-        .nav-item .nav-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+        .nav-item {
+            padding: 1rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;
+        }
+        .nav-item:hover { background: var(--bg-input); }
+        .nav-item.active { background: var(--accent-bg); border-left: 4px solid var(--accent-color); }
+        .nav-item .nav-title { font-weight: 600; font-size: 0.95rem; }
+        .nav-item .nav-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
-        .sidebar-footer {
-            flex-shrink: 0;
-            padding: 1.5rem;
-            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); 
-            border-top: 1px solid var(--border-color);
-            background: var(--bg-sidebar);
-        }
+        .sidebar-footer {
+            flex-shrink: 0;
+            padding: 1.5rem;
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); 
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-sidebar);
+        }
 
-        /* --- MAIN CONTENT --- */
-        main {
-            flex: 1; overflow-y: auto; padding: 1rem;
-            scroll-behavior: smooth; position: relative;
-            padding-bottom: 100px;
-        }
+        /* --- MAIN CONTENT --- */
+        main {
+            flex: 1; overflow-y: auto; padding: 1rem;
+            scroll-behavior: smooth; position: relative;
+            padding-bottom: 100px;
+        }
 
-        .day-group { 
-            margin-bottom: 2rem; 
-            padding-bottom: 2rem; 
-            border-bottom: 8px solid var(--bg-input);
-            scroll-margin-top: 80px; 
-        }
-        .day-group:last-child { border-bottom: none; }
+        .day-group { 
+            margin-bottom: 2rem; 
+            padding-bottom: 2rem; 
+            border-bottom: 8px solid var(--bg-input);
+            scroll-margin-top: 80px; 
+        }
+        .day-group:last-child { border-bottom: none; }
 
-        .day-header {
-            position: relative; 
-            background: transparent;
-            z-index: 10;
-            padding: 1rem 0 0.5rem 0; margin-bottom: 0.5rem;
-            display: flex; align-items: baseline; gap: 0.5rem;
-        }
-        .day-name { font-size: 1.5rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; }
-        .day-date { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
-        .today-badge {
-            background: var(--accent-color); color: white; font-size: 0.6rem; 
-            padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;
-            vertical-align: middle; margin-left: 8px;
-        }
+        .day-header {
+            position: relative; 
+            background: transparent;
+            z-index: 10;
+            padding: 1rem 0 0.5rem 0; margin-bottom: 0.5rem;
+            display: flex; align-items: baseline; gap: 0.5rem;
+        }
+        .day-name { font-size: 1.5rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; }
+        .day-date { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+        .today-badge {
+            background: var(--accent-color); color: white; font-size: 0.6rem; 
+            padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;
+            vertical-align: middle; margin-left: 8px;
+        }
 
-        .class-card {
-            background: var(--bg-card); border: 1px solid var(--border-color);
-            border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem;
-            cursor: pointer; transition: transform 0.2s, border-color 0.2s;
-            position: relative; overflow: hidden;
-            display: flex; gap: 1rem;
-        }
-        .class-card:hover { transform: translateY(-2px); border-color: var(--accent-color); }
-        .class-card::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-            background: var(--border-color);
-        }
-        /* Color Coding based on Type */
-        .class-card.type-BST::before { background: #8b5cf6; } /* Purple */
-        .class-card.type-Lecture::before { background: #3b82f6; } /* Blue */
-        .class-card.type-Seminar::before { background: #f97316; } /* Orange */
-        .class-card.type-Case::before { background: #10b981; } /* Green (Case Discussion) */
-        .class-card.type-Exam::before { background: #ef4444; } /* Red */
+        .class-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem;
+            cursor: pointer; transition: transform 0.2s, border-color 0.2s;
+            position: relative; overflow: hidden;
+            display: flex; gap: 1rem;
+        }
+        .class-card:hover { transform: translateY(-2px); border-color: var(--accent-color); }
+        .class-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+            background: var(--border-color);
+        }
+        /* Color Coding based on Type */
+        .class-card.type-BST::before { background: #8b5cf6; } /* Purple */
+        .class-card.type-Lecture::before { background: #3b82f6; } /* Blue */
+        .class-card.type-Seminar::before { background: #f97316; } /* Orange */
+        .class-card.type-Case::before { background: #10b981; } /* Green (Case Discussion) */
+        .class-card.type-Exam::before { background: #ef4444; } /* Red */
 
-        .time-col { 
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            min-width: 60px; padding-right: 1rem; border-right: 1px solid var(--border-color);
-        }
-        .time-start { font-weight: 800; font-size: 1rem; color: var(--text-main); }
-        .time-ampm { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .time-col { 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            min-width: 60px; padding-right: 1rem; border-right: 1px solid var(--border-color);
+        }
+        .time-start { font-weight: 800; font-size: 1rem; color: var(--text-main); }
+        .time-ampm { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
 
-        .info-col { flex: 1; }
-        .card-type { 
-            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; 
-            font-weight: 700; margin-bottom: 0.25rem; display: inline-block;
-            padding: 2px 6px; border-radius: 4px; background: var(--bg-input); color: var(--text-muted);
-        }
-        .card-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem; line-height: 1.2; }
-        .card-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
-        .tbc-alert { color: var(--status-yellow); font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+        .info-col { flex: 1; }
+        .card-type { 
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; 
+            font-weight: 700; margin-bottom: 0.25rem; display: inline-block;
+            padding: 2px 6px; border-radius: 4px; background: var(--bg-input); color: var(--text-muted);
+        }
+        .card-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem; line-height: 1.2; }
+        .card-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .tbc-alert { color: var(--status-yellow); font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 
-        /* --- MODALS FIXED UI --- */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); 
-            z-index: 2000; 
-            backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity 0.2s;
-        }
-        .modal-overlay.active { display: flex; opacity: 1; }
+        .next-week-container { padding: 2rem 0; text-align: center; }
+        .btn-next-week {
+            background-color: var(--bg-input); color: var(--accent-color); border: 1px solid var(--border-color);
+            padding: 1rem 2rem; border-radius: 2rem; font-weight: 700; font-size: 1rem; cursor: pointer;
+            transition: all 0.2s; width: 100%; max-width: 300px;
+        }
+        .btn-next-week:hover { background-color: var(--accent-bg); border-color: var(--accent-color); }
 
-        .detail-sheet {
-            background: var(--bg-card);
-            width: calc(100% - 24px); 
-            max-width: 600px;
-            height: auto;
-            max-height: 85vh;
-            border-radius: 1.5rem; 
-            position: absolute; 
-            bottom: 12px; 
-            left: 50%;
-            transform: translateX(-50%) translateY(110%); 
-            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            border: 1px solid var(--border-color);
-            display: flex; flex-direction: column; overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        
-        .modal-overlay.active .detail-sheet { 
-            transform: translateX(-50%) translateY(0); 
-        }
+        /* --- MOBILE SIDEBAR RESPONSIVE --- */
+        .backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 35; }
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            aside { 
+                position: fixed; 
+                top: 0; left: 0;
+                height: 100dvh; 
+                transform: translateX(-100%); 
+                box-shadow: 10px 0 30px rgba(0,0,0,0.5); 
+            }
+            aside.open { transform: translateX(0); }
+            .backdrop.open { display: block; }
+            .time-col { min-width: 50px; padding-right: 0.75rem; }
+        }
 
-        @media(min-width: 768px) {
-            .detail-sheet { 
-                position: relative; 
-                bottom: auto; left: auto; 
-                transform: scale(0.95); 
-                opacity: 0; 
-            }
-            .modal-overlay.active .detail-sheet { 
-                transform: scale(1); 
-                opacity: 1; 
-            }
-        }
+        /* --- MODALS FIXED UI (Floating Style) --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); 
+            z-index: 2000; 
+            backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
 
-        .sheet-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: start; background: var(--bg-box); }
-        .sheet-close { background: var(--bg-input); border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .sheet-body { flex: 1; overflow-y: auto; padding: 1.5rem; padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
-        
-        .detail-row { margin-bottom: 1.5rem; }
-        .detail-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-color); font-weight: 700; margin-bottom: 0.5rem; }
-        .detail-value { font-size: 1.1rem; color: var(--text-main); line-height: 1.4; }
-        .detail-note { background: var(--bg-input); padding: 1rem; border-radius: 0.5rem; border-left: 3px solid var(--accent-color); font-size: 0.95rem; }
+        .detail-sheet {
+            background: var(--bg-card);
+            width: calc(100% - 24px); 
+            max-width: 600px;
+            height: auto;
+            max-height: 85vh;
+            border-radius: 1.5rem; 
+            position: absolute; 
+            bottom: 12px; 
+            left: 50%;
+            transform: translateX(-50%) translateY(110%); 
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .modal-overlay.active .detail-sheet { 
+            transform: translateX(-50%) translateY(0); 
+        }
 
-        /* CONTACT BUTTONS */
-        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 1rem; }
-        .btn-whatsapp {
-            background-color: var(--whatsapp-bg); 
-            color: var(--whatsapp-color);
-            border: 1px solid var(--whatsapp-color);
-            padding: 0.8rem; border-radius: 0.5rem; 
-            font-weight: 700; cursor: pointer; 
-            text-align: center; text-decoration: none;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        
-        /* PRESENTER SECTION */
-        .presenter-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
-        .presenter-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .presenter-tag { 
-            background: var(--accent-bg); color: var(--accent-text); 
-            padding: 6px 12px; border-radius: 1rem; font-size: 0.85rem; 
-            font-weight: 600; cursor: pointer; border: 1px solid var(--accent-color);
-        }
+        @media(min-width: 768px) {
+            .detail-sheet { 
+                position: relative; 
+                bottom: auto; left: auto; 
+                transform: scale(0.95); 
+                opacity: 0; 
+            }
+            .modal-overlay.active .detail-sheet { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+        }
 
-        .admin-booking-box {
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        .booking-btn { 
-            background: var(--whatsapp-color); color: white; border: none; 
-            padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; 
-            text-decoration: none;
-        }
+        .sheet-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: start; background: var(--bg-box); }
+        .sheet-close { background: var(--bg-input); border: none; width: 32px; height: 32px; border-radius: 50%; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .sheet-body { flex: 1; overflow-y: auto; padding: 1.5rem; padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
+        
+        .detail-row { margin-bottom: 1.5rem; }
+        .detail-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-color); font-weight: 700; margin-bottom: 0.5rem; }
+        .detail-value { font-size: 1.1rem; color: var(--text-main); line-height: 1.4; }
+        .detail-note { background: var(--bg-input); padding: 1rem; border-radius: 0.5rem; border-left: 3px solid var(--accent-color); font-size: 0.95rem; }
 
-        /* FAB */
-        .fab {
-            position: fixed; bottom: calc(2rem + env(safe-area-inset-bottom)); right: 2rem; width: 56px; height: 56px;
-            background: var(--accent-color); color: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 90;
-            font-size: 1.5rem; transition: transform 0.2s;
-        }
-        .fab:hover { transform: scale(1.1); }
+        /* CONTACT BUTTONS */
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 1rem; }
+        .btn-whatsapp {
+            background-color: var(--whatsapp-bg); 
+            color: var(--whatsapp-color);
+            border: 1px solid var(--whatsapp-color);
+            padding: 0.8rem; border-radius: 0.5rem; 
+            font-weight: 700; cursor: pointer; 
+            text-align: center; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-whatsapp:hover { opacity: 0.9; }
+        
+        /* PRESENTER SECTION */
+        .presenter-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
+        .presenter-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .presenter-tag { 
+            background: var(--accent-bg); color: var(--accent-text); 
+            padding: 6px 12px; border-radius: 1rem; font-size: 0.85rem; 
+            font-weight: 600; cursor: pointer; border: 1px solid var(--accent-color);
+        }
 
-        .form-group { margin-bottom: 1rem; }
-        .form-label { display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted); }
-        .form-input, .form-select { 
-            width: 100%; padding: 0.8rem; background: var(--bg-input); 
-            border: 1px solid var(--border-color); color: var(--text-main); 
-            border-radius: 0.5rem; font-size: 1rem; outline: none; 
-        }
-        .btn { padding: 0.8rem 1.5rem; border-radius: 0.5rem; font-weight: 700; border: none; cursor: pointer; width: 100%; margin-top: 1rem; }
-        .btn-primary { background: var(--accent-color); color: white; }
-        .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; margin-top: 0.5rem; }
-        .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
-        .hidden { display: none; }
-        
-        .time-row { display: flex; gap: 10px; }
-        .time-block { flex: 1; }
-    </style>
+        .admin-booking-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .booking-header { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 0.5rem; }
+        .booking-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .booking-label { font-size: 0.9rem; color: var(--text-main); }
+        .booking-btn { 
+            background: var(--whatsapp-color); color: white; border: none; 
+            padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; 
+            text-decoration: none;
+        }
+
+        /* FAB */
+        .fab {
+            position: fixed; bottom: calc(2rem + env(safe-area-inset-bottom)); right: 2rem; width: 56px; height: 56px;
+            background: var(--accent-color); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 90;
+            font-size: 1.5rem; transition: transform 0.2s;
+        }
+        .fab:hover { transform: scale(1.1); }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted); }
+        .form-input, .form-select { 
+            width: 100%; padding: 0.8rem; background: var(--bg-input); 
+            border: 1px solid var(--border-color); color: var(--text-main); 
+            border-radius: 0.5rem; font-size: 1rem; outline: none; 
+        }
+        .form-input:focus, .form-select:focus { border-color: var(--accent-color); }
+        .btn { padding: 0.8rem 1.5rem; border-radius: 0.5rem; font-weight: 700; border: none; cursor: pointer; width: 100%; margin-top: 1rem; }
+        .btn-primary { background: var(--accent-color); color: white; }
+        .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; margin-top: 0.5rem; }
+        .hidden { display: none; }
+        
+        /* Time Row Style */
+        .time-row { display: flex; gap: 10px; }
+        .time-block { flex: 1; }
+        input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        [data-theme="light"] input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0); }
+
+    </style>
 </head>
 <body>
 
-    <header>
-        <div class="header-left">
-            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-            <h1 class="app-title" id="mainHeaderTitle">Internal Medicine</h1>
-            <span class="week-badge" id="currentWeekBadge">Week 1</span>
-        </div>
-        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
-    </header>
+    <header>
+        <div class="header-left">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="app-title" id="mainHeaderTitle">Internal Medicine</h1>
+            <span class="week-badge" id="currentWeekBadge">Week 1</span>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <svg id="sun-icon" style="display:none" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"></path></svg>
+            <svg id="moon-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"></path></svg>
+        </button>
+    </header>
 
-    <div class="main-container">
-        <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
-        
-        <aside id="sidebar">
-            <div class="nav-header">
-                <div class="view-toggle">
-                    <button id="btnViewWeek" class="toggle-btn active" onclick="switchView('week')">Weeks</button>
-                    <button id="btnViewLecturer" class="toggle-btn" onclick="switchView('lecturer')">Lecturers</button>
-                </div>
-            </div>
-            <div id="weekList" class="nav-scroll-area"></div>
-            <div class="sidebar-footer">
-                <button onclick="adminLogin()" id="adminBtn" class="btn" style="margin-top:0; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">
-                    Admin Login
-                </button>
-            </div>
-        </aside>
+    <div class="main-container">
+        <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
+        
+        <aside id="sidebar">
+            <div class="nav-header">
+                <div class="view-toggle">
+                    <button id="btnViewWeek" class="toggle-btn active" onclick="switchView('week')">Weeks</button>
+                    <button id="btnViewLecturer" class="toggle-btn" onclick="switchView('lecturer')">Lecturers</button>
+                </div>
+            </div>
+            <div id="weekList" class="nav-scroll-area"></div>
+            <div class="sidebar-footer">
+                <button onclick="adminLogin()" id="adminBtn" class="btn" style="margin-top:0; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem;">
+                    Admin Login
+                </button>
+                <button onclick="cleanDB()" id="cleanBtn" class="hidden btn btn-danger" style="font-size: 0.8rem;">
+                    Reset Database
+                </button>
+            </div>
+        </aside>
 
-        <main id="scheduleContainer">
-            <div style="text-align: center; padding-top: 5rem; color: var(--text-muted);">
-                Loading Schedule...
-            </div>
-        </main>
-    </div>
+        <main id="scheduleContainer">
+            <div style="text-align: center; padding-top: 5rem; color: var(--text-muted);">
+                <div class="loader" style="margin: 0 auto 1rem auto; width: 30px; height: 30px; border: 3px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                Loading Schedule...
+            </div>
+        </main>
+    </div>
 
-    <div id="fabBtn" class="fab hidden" onclick="openEditModal()">+</div>
+    <div id="fabBtn" class="fab hidden" onclick="openEditModal()">+</div>
 
-    <div id="detailModal" class="modal-overlay">
-        <div class="detail-sheet">
-            <div class="sheet-header">
-                <div>
-                    <span class="card-type" id="detailType">LECTURE</span>
-                    <h2 style="margin-top: 0.5rem; font-size: 1.5rem;" id="detailTitle">Class Title</h2>
-                </div>
-                <button class="sheet-close" onclick="closeModal('detailModal')">×</button>
-            </div>
-            <div class="sheet-body">
-                <div class="detail-row"><div class="detail-label">Time & Date</div><div class="detail-value" id="detailTime"></div></div>
-                <div class="detail-row"><div class="detail-label">Lecturer</div><div class="detail-value" id="detailLecturer"></div></div>
-                <div class="detail-row"><div class="detail-label">Venue</div><div class="detail-value" id="detailVenue"></div></div>
-                <div class="detail-row"><div class="detail-label">Notes</div><div class="detail-note" id="detailNotes"></div></div>
-                
-                <div id="contactSection" class="btn-group hidden"></div>
+    <div id="detailModal" class="modal-overlay">
+        <div class="detail-sheet">
+            <div class="sheet-header">
+                <div>
+                    <span class="card-type" id="detailType">LECTURE</span>
+                    <h2 style="margin-top: 0.5rem; font-size: 1.5rem;" id="detailTitle">Class Title</h2>
+                </div>
+                <button class="sheet-close" onclick="closeModal('detailModal')">×</button>
+            </div>
+            <div class="sheet-body">
+                <div class="detail-row">
+                    <div class="detail-label">Time & Date</div>
+                    <div class="detail-value" id="detailTime"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Lecturer</div>
+                    <div class="detail-value" id="detailLecturer"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Venue</div>
+                    <div class="detail-value" id="detailVenue"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Notes</div>
+                    <div class="detail-note" id="detailNotes"></div>
+                </div>
+                
+                <div id="contactSection" class="btn-group hidden"></div>
 
-                <div id="presenterSection" class="presenter-section hidden">
-                    <div class="detail-label">Students Presenting</div>
-                    <div id="presenterList" class="presenter-list"></div>
-                    <button class="btn btn-primary" onclick="openPresentForm()" style="margin-top: 1rem;">I'm Presenting</button>
-                </div>
-                
-                <button id="editBtn" class="hidden btn btn-ghost" style="margin-top:1rem" onclick="editCurrentClass()">Edit Class (Admin)</button>
-            </div>
-        </div>
-    </div>
+                <div id="presenterSection" class="presenter-section hidden">
+                    <div class="detail-label">Students Presenting</div>
+                    <div id="presenterList" class="presenter-list"></div>
+                    <button class="btn btn-primary" onclick="openPresentForm()" style="margin-top: 1rem;">I'm Presenting</button>
+                </div>
+                
+                <button id="editBtn" class="hidden btn btn-ghost" style="margin-top:1rem" onclick="editCurrentClass()">Edit Class (Admin)</button>
+            </div>
+        </div>
+    </div>
 
-    <div id="presentFormModal" class="modal-overlay">
-        <div class="detail-sheet">
-            <div class="sheet-header">
-                <h2 id="presentFormTitle">Register Presentation</h2>
-                <button class="sheet-close" onclick="closeModal('presentFormModal')">×</button>
-            </div>
-            <div class="sheet-body">
-                <input type="hidden" id="editPresenterId">
-                <div class="form-group">
-                    <label class="form-label">Your Name (Required)</label>
-                    <input type="text" id="inpPresName" class="form-input" placeholder="e.g. John Doe">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Case Name (Optional)</label>
-                    <input type="text" id="inpPresCase" class="form-input" placeholder="e.g. Chronic Liver Disease">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Findings / Details (Optional)</label>
-                    <textarea id="inpPresDetail" class="form-input" rows="4" placeholder="Brief summary of your case..."></textarea>
-                </div>
-                <button onclick="submitPresentation()" class="btn btn-primary">Save Info</button>
-            </div>
-        </div>
-    </div>
+    <div id="presentFormModal" class="modal-overlay">
+        <div class="detail-sheet">
+            <div class="sheet-header">
+                <h2>Presenter Info</h2>
+                <button class="sheet-close" onclick="closeModal('presentFormModal')">×</button>
+            </div>
+            <div class="sheet-body">
+                <div class="form-group">
+                    <label class="form-label">Your Name</label>
+                    <input type="text" id="inpPresName" class="form-input" placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Case Name</label>
+                    <input type="text" id="inpPresCase" class="form-input" placeholder="e.g. Chronic Liver Disease">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Key Findings / Details</label>
+                    <textarea id="inpPresDetail" class="form-input" rows="4" placeholder="Brief summary of what you are presenting..."></textarea>
+                </div>
+                <button onclick="submitPresentation()" class="btn btn-primary">Register Presentation</button>
+            </div>
+        </div>
+    </div>
 
-    <div id="viewPresenterModal" class="modal-overlay">
-        <div class="detail-sheet">
-            <div class="sheet-header">
-                <h2 id="viewPresName">Presenter</h2>
-                <button class="sheet-close" onclick="closeModal('viewPresenterModal')">×</button>
-            </div>
-            <div class="sheet-body">
-                <div class="detail-row"><div class="detail-label">Case Name</div><div class="detail-value" id="viewPresCase"></div></div>
-                <div class="detail-row"><div class="detail-label">Details</div><div class="detail-note" id="viewPresDetail"></div></div>
-                
-                <div class="btn-group">
-                    <button class="btn btn-primary" onclick="openEditPresenter()">Edit My Case</button>
-                    <button class="btn btn-danger" onclick="deletePresentation()">Remove Me</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div id="viewPresenterModal" class="modal-overlay">
+        <div class="detail-sheet">
+            <div class="sheet-header">
+                <h2 id="viewPresName">Presenter</h2>
+                <button class="sheet-close" onclick="closeModal('viewPresenterModal')">×</button>
+            </div>
+            <div class="sheet-body">
+                <div class="detail-row">
+                    <div class="detail-label">Case Presenting</div>
+                    <div class="detail-value" id="viewPresCase"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Details</div>
+                    <div class="detail-note" id="viewPresDetail"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div id="editModal" class="modal-overlay">
-        <div class="detail-sheet">
-            <div class="sheet-header"><h2>Manage Class</h2><button class="sheet-close" onclick="closeModal('editModal')">×</button></div>
-            <div class="sheet-body">
-                <input type="hidden" id="editId">
-                <div class="form-group"><label class="form-label">Type</label><select id="inpType" class="form-select"><option value="Lecture">Lecture</option><option value="BST">BST</option><option value="Case Discussion">Case Discussion</option><option value="Seminar">Seminar</option><option value="Exam">Exam</option><option value="Custom">Other</option></select></div>
-                <div class="form-group"><label class="form-label">Title</label><input type="text" id="inpTitle" class="form-input"></div>
-                <div class="form-group">
-                    <label class="form-label">Lecturer</label>
-                    <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select>
-                    <div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" placeholder="Name" style="margin-top:0.5rem"></div>
-                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Phone" style="margin-top:0.5rem">
-                </div>
-                <div class="form-group"><label class="form-label">Date</label><input type="date" id="inpDate" class="form-input"></div>
-                <div class="form-group time-row"><div class="time-block"><label class="form-label">Start</label><input type="time" id="inpStartTime" class="form-input"></div><div class="time-block"><label class="form-label">End</label><input type="time" id="inpEndTime" class="form-input"></div></div>
-                <div class="form-group"><label class="form-label">Venue</label><input type="text" id="inpVenue" class="form-input"></div>
-                <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
-                <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Class</button>
-            </div>
-        </div>
-    </div>
+    <div id="editModal" class="modal-overlay">
+        <div class="detail-sheet">
+            <div class="sheet-header">
+                <h2>Manage Class</h2>
+                <button class="sheet-close" onclick="closeModal('editModal')">×</button>
+            </div>
+            <div class="sheet-body">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select id="inpType" class="form-select">
+                        <option value="Lecture">Lecture</option>
+                        <option value="BST">BST (Bedside Teaching)</option>
+                        <option value="Case Discussion">Case Discussion</option> 
+                        <option value="Seminar">Seminar</option>
+                        <option value="Exam">Exam / Test</option>
+                        <option value="Custom">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="inpTitle" class="form-input" placeholder="e.g. Cardio BST">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lecturer</label>
+                    <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()">
+                        <option value="">Select Lecturer...</option>
+                    </select>
+                    
+                    <div id="divOtherLecturer" class="hidden" style="margin-top: 0.5rem; border-left: 2px solid var(--accent-color); padding-left: 10px;">
+                        <label class="form-label" style="font-size: 0.75rem;">Name</label>
+                        <input type="text" id="inpLecturerText" class="form-input" placeholder="Enter Name...">
+                    </div>
+                    
+                    <label class="form-label" style="margin-top: 0.5rem;">Lecturer Phone No.</label>
+                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="e.g. 60123456789">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Related Phone No. (Optional)</label>
+                    <input type="tel" id="inpExtraPhone" class="form-input" placeholder="Additional contact (e.g. Officer)">
+                </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBd9E9VkE7bllIN13NYGz801F4Jue_VzVk",
-            authDomain: "im-helper-d3a4a.firebaseapp.com",
-            projectId: "im-helper-d3a4a",
-            storageBucket: "im-helper-d3a4a.firebasestorage.app",
-            messagingSenderId: "772636018512",
-            appId: "1:772636018512:web:b14c28259606e18d6f4e55"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const scheduleRef = db.collection("schedule_group_b");
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="inpDate" class="form-input">
+                </div>
+                
+                <div class="form-group time-row">
+                    <div class="time-block">
+                        <label class="form-label">Start Time</label>
+                        <input type="time" id="inpStartTime" class="form-input">
+                    </div>
+                    <div class="time-block">
+                        <label class="form-label">End Time</label>
+                        <input type="time" id="inpEndTime" class="form-input">
+                    </div>
+                </div>
 
-        const lecturerContacts = { "Dr Affizal Samsudin": "60176631789", "Dr Asri B Said": "60138021143", "Dr Chai Chee Shee": "60198188265", "Dr Chan En Ze": "60105054955", "Dr Chow Han Bing": "60192712889", "Dr Diana Ng": "60198198265", "Dr Frederick De Rozario": "60168678252", "Dr Henry Gudum": "60198895047", "Dr Joshua Chung": "60168963966", "Dr Kuan Jew Win": "60198593011", "Dr Ling Hwei Sung": "60128939596", "Dr Loh Huai Heng": "60122010765", "Dr Sim Chun Yang": "60138273338", "Dr Sim Sing Yee": "60138338862", "Dr Yeoh Cheng Wooi": "60182628290" };
-        const lecturers = Object.keys(lecturerContacts).sort(); lecturers.push("Other");
+                <div class="form-group">
+                    <label class="form-label">Venue</label>
+                    <input type="text" id="inpVenue" class="form-input" placeholder="Leave blank for TBA">
+                </div>
 
-        let allEvents = [], currentWeek = 1, viewMode = 'week', currentLecturer = null, isAdmin = false, currentDetailId = null, currentPresIndex = null;
+                <div class="admin-booking-box">
+                    <div class="booking-header">Book Venue (Admin Only)</div>
+                    <div class="booking-row">
+                        <div class="booking-label">En Hazrim (Samarahan)</div>
+                        <a href="https://wa.me/60146493928" target="_blank" class="booking-btn">WhatsApp</a>
+                    </div>
+                    <div class="booking-row">
+                        <div class="booking-label">En Sadiqin (City Campus)</div>
+                        <a href="https://wa.me/601125101075" target="_blank" class="booking-btn">WhatsApp</a>
+                    </div>
+                </div>
 
-        scheduleRef.orderBy("date").orderBy("time").onSnapshot(s => {
-            allEvents = s.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderSidebarNav();
-            renderSchedule();
-            if(currentDetailId) openDetail(currentDetailId);
-        });
+                <div class="form-group">
+                    <label class="form-label">Notes (Optional)</label>
+                    <textarea id="inpNotes" class="form-input" rows="3" placeholder="e.g. Bring logbook"></textarea>
+                </div>
+                <div class="form-group">
+                     <label class="form-label">Week</label>
+                     <select id="inpWeek" class="form-select">
+                         <option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option>
+                         <option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option>
+                         <option value="7">Week 7</option><option value="8">Week 8</option>
+                     </select>
+                </div>
+                <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
+                <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Class</button>
+            </div>
+        </div>
+    </div>
 
-        function switchView(m) { viewMode = m; renderSidebarNav(); renderSchedule(); }
-        function calculateCurrentWeek() { const s = new Date('2025-12-22T00:00:00'), t = new Date(), diff = Math.ceil(Math.abs(t - s) / (1000*60*60*24)); return t < s ? 1 : Math.min(8, Math.ceil(diff / 7)); }
+    <script>
+        // --- CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBd9E9VkE7bllIN13NYGz801F4Jue_VzVk",
+            authDomain: "im-helper-d3a4a.firebaseapp.com",
+            projectId: "im-helper-d3a4a",
+            storageBucket: "im-helper-d3a4a.firebasestorage.app",
+            messagingSenderId: "772636018512",
+            appId: "1:772636018512:web:b14c28259606e18d6f4e55"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
+        const scheduleRef = db.collection("schedule_group_b");
 
-        function renderSidebarNav() {
-            const list = document.getElementById('weekList'); list.innerHTML = '';
-            if (viewMode === 'week') {
-                for(let i=1; i<=8; i++) {
-                    const div = document.createElement('div');
-                    div.className = `nav-item ${i === currentWeek ? 'active' : ''}`;
-                    div.onclick = () => { currentWeek = i; renderSidebarNav(); renderSchedule(); toggleSidebar(); };
-                    div.innerHTML = `<div class="nav-title">Week ${i}</div>`;
-                    list.appendChild(div);
-                }
-            } else {
-                const names = new Set(Object.keys(lecturerContacts));
-                allEvents.forEach(e => { if(e.lecturer) names.add(e.lecturer); });
-                Array.from(names).sort().forEach(n => {
-                    const div = document.createElement('div');
-                    div.className = `nav-item ${n === currentLecturer ? 'active' : ''}`;
-                    div.onclick = () => { currentLecturer = n; renderSidebarNav(); renderSchedule(); toggleSidebar(); };
-                    div.innerHTML = `<div class="nav-title">${n}</div>`;
-                    list.appendChild(div);
-                });
-            }
-        }
+        // --- DATA: LECTURERS ---
+        const lecturerContacts = {
+            "Dr Affizal Samsudin": "60176631789",
+            "Dr Asri B Said": "60138021143",
+            "Dr Chai Chee Shee": "60198188265",
+            "Dr Chan En Ze": "60105054955",
+            "Dr Chow Han Bing": "60192712889",
+            "Dr Diana Ng": "60198198265",
+            "Dr Frederick De Rozario": "60168678252",
+            "Dr Henry Gudum": "60198895047",
+            "Dr Joshua Chung": "60168963966",
+            "Dr Kuan Jew Win": "60198593011",
+            "Dr Ling Hwei Sung": "60128939596",
+            "Dr Loh Huai Heng": "60122010765",
+            "Dr Sim Chun Yang": "60138273338",
+            "Dr Sim Sing Yee": "60138338862",
+            "Dr Yeoh Cheng Wooi": "60182628290"
+        };
 
-        function renderSchedule() {
-            const container = document.getElementById('scheduleContainer'); container.innerHTML = '';
-            let filtered = viewMode === 'week' ? allEvents.filter(e => e.week == currentWeek) : allEvents.filter(e => e.lecturer === currentLecturer);
-            if(filtered.length === 0) { container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; return; }
-            const grouped = {}; filtered.forEach(e => { if(!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
-            Object.keys(grouped).sort().forEach(date => {
-                const div = document.createElement('div'); div.className = 'day-group';
-                let cards = ''; grouped[date].forEach(ev => {
-                    const t = ev.time && ev.time !== "TBA" ? ev.time.split(' ') : ["TBA", ""];
-                    cards += `<div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')"><div class="time-col"><span class="time-start">${t[0]}</span><span class="time-ampm">${t[1]}</span></div><div class="info-col"><span class="card-type">${ev.type}</span><div class="card-title">${ev.title}</div><div class="card-meta">${ev.lecturer} • ${ev.venue}</div></div></div>`;
-                });
-                div.innerHTML = `<div class="day-header"><span class="day-name">${new Date(date).toLocaleDateString('en-US',{weekday:'long'})}</span><span class="day-date">${date}</span></div>` + cards;
-                container.appendChild(div);
-            });
-        }
+        const lecturers = Object.keys(lecturerContacts).sort();
+        lecturers.push("Other");
 
-        function openDetail(id) {
-            currentDetailId = id;
-            const ev = allEvents.find(e => e.id === id);
-            if(!ev) return;
-            document.getElementById('detailType').innerText = ev.type;
-            document.getElementById('detailTitle').innerText = ev.title;
-            document.getElementById('detailTime').innerText = `${ev.time} • ${ev.date}`;
-            document.getElementById('detailLecturer').innerText = ev.lecturer;
-            document.getElementById('detailVenue').innerText = ev.venue;
-            document.getElementById('detailNotes').innerText = ev.notes || "None";
-            
-            const btnGroup = document.getElementById('contactSection');
-            btnGroup.innerHTML = ''; btnGroup.classList.add('hidden');
-            let p = ev.lecturerPhone || lecturerContacts[ev.lecturer];
-            if (p) { btnGroup.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; btnGroup.classList.remove('hidden'); }
+        let allEvents = [];
+        let currentWeek = 1;
+        let viewMode = 'week'; 
+        let currentLecturer = null;
+        let isAdmin = false;
 
-            // Presenter Logic
-            const presSec = document.getElementById('presenterSection');
-            const presList = document.getElementById('presenterList');
-            presList.innerHTML = '';
-            if (ev.type === "BST" || ev.type === "Case Discussion") {
-                presSec.classList.remove('hidden');
-                (ev.presenters || []).forEach((p, idx) => {
-                    const tag = document.createElement('div');
-                    tag.className = 'presenter-tag';
-                    tag.innerText = p.name;
-                    tag.onclick = () => viewPresenter(idx);
-                    presList.appendChild(tag);
-                });
-            } else { presSec.classList.add('hidden'); }
-            
-            document.getElementById('detailModal').classList.add('active');
-            document.getElementById('editBtn').classList.toggle('hidden', !isAdmin);
-        }
+        function checkSidebar() {
+            const sb = document.getElementById('sidebar');
+            if(sb.classList.contains('open')) toggleSidebar();
+        }
 
-        function viewPresenter(idx) {
-            currentPresIndex = idx;
-            const p = allEvents.find(e => e.id === currentDetailId).presenters[idx];
-            document.getElementById('viewPresName').innerText = p.name;
-            document.getElementById('viewPresCase').innerText = p.caseName || "Not specified";
-            document.getElementById('viewPresDetail').innerText = p.detail || "No details provided.";
-            document.getElementById('viewPresenterModal').classList.add('active');
-        }
+        function initTheme() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('sun-icon').style.display = saved === 'light' ? 'block' : 'none';
+            document.getElementById('moon-icon').style.display = saved === 'dark' ? 'block' : 'none';
+        }
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            initTheme();
+        }
+        initTheme();
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('backdrop').classList.toggle('open');
+        }
 
-        function openPresentForm() {
-            document.getElementById('editPresenterId').value = "";
-            document.getElementById('inpPresName').value = "";
-            document.getElementById('inpPresCase').value = "";
-            document.getElementById('inpPresDetail').value = "";
-            document.getElementById('presentFormTitle').innerText = "Register Presentation";
-            document.getElementById('presentFormModal').classList.add('active');
-        }
+        function switchView(mode) {
+            viewMode = mode;
+            document.getElementById('btnViewWeek').classList.toggle('active', mode === 'week');
+            document.getElementById('btnViewLecturer').classList.toggle('active', mode === 'lecturer');
+            renderSidebarNav();
+            if (mode === 'lecturer' && !currentLecturer) {
+                 document.getElementById('scheduleContainer').innerHTML = '<div style="text-align:center; padding: 4rem; color: var(--text-muted);">Select a Lecturer from the menu.</div>';
+            } else {
+                renderSchedule();
+            }
+        }
 
-        function openEditPresenter() {
-            const p = allEvents.find(e => e.id === currentDetailId).presenters[currentPresIndex];
-            document.getElementById('editPresenterId').value = p.id;
-            document.getElementById('inpPresName').value = p.name;
-            document.getElementById('inpPresCase').value = p.caseName || "";
-            document.getElementById('inpPresDetail').value = p.detail || "";
-            document.getElementById('presentFormTitle').innerText = "Edit Presentation";
-            closeModal('viewPresenterModal');
-            document.getElementById('presentFormModal').classList.add('active');
-        }
+        function calculateCurrentWeek() {
+            const startDate = new Date('2025-12-22T00:00:00');
+            const today = new Date();
+            const diffTime = Math.abs(today - startDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            if (today < startDate) return 1;
+            const weekNum = Math.ceil(diffDays / 7);
+            return weekNum > 8 ? 8 : weekNum;
+        }
 
-        async function submitPresentation() {
-            const name = document.getElementById('inpPresName').value;
-            const editId = document.getElementById('editPresenterId').value;
-            if(!name) return alert("Name is required");
+        scheduleRef.orderBy("date").orderBy("time").onSnapshot(snapshot => {
+            allEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderSidebarNav();
+            if(viewMode === 'week') renderSchedule();
+            else if(currentLecturer) renderSchedule();
+            // Re-render open detail if data changed
+            if(currentDetailId) openDetail(currentDetailId);
+        });
 
-            let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
-            
-            if(editId) {
-                // Update existing
-                presenters = presenters.map(p => p.id === editId ? {...p, name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value} : p);
-            } else {
-                // Add new
-                presenters.push({ id: Date.now().toString(), name, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value });
-            }
+        function renderSidebarNav() {
+            const list = document.getElementById('weekList');
+            list.innerHTML = '';
+            
+            if (viewMode === 'week') {
+                const start = new Date('2025-12-22');
+                for(let i=1; i<=8; i++) {
+                    const wStart = new Date(start);
+                    wStart.setDate(start.getDate() + (i-1)*7);
+                    const wEnd = new Date(wStart);
+                    wEnd.setDate(wStart.getDate() + 6);
+                    const format = d => `${d.getDate()}/${d.getMonth()+1}`;
+                    const div = document.createElement('div');
+                    div.className = `nav-item ${i === currentWeek ? 'active' : ''}`;
+                    div.onclick = () => { currentWeek = i; renderSidebarNav(); renderSchedule(); toggleSidebar(); };
+                    div.innerHTML = `<div><div class="nav-title">Week ${i}</div><div class="nav-sub">${format(wStart)} - ${format(wEnd)}</div></div>${i === currentWeek ? '<div>•</div>' : ''}`;
+                    list.appendChild(div);
+                }
+                document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
+            } else {
+                const allNames = new Set(Object.keys(lecturerContacts));
+                allEvents.forEach(e => { if(e.lecturer) allNames.add(e.lecturer); });
+                const sortedNames = Array.from(allNames).sort();
 
-            await scheduleRef.doc(currentDetailId).update({ presenters });
-            closeModal('presentFormModal');
-        }
+                sortedNames.forEach(name => {
+                    const div = document.createElement('div');
+                    div.className = `nav-item ${name === currentLecturer ? 'active' : ''}`;
+                    div.onclick = () => { currentLecturer = name; renderSidebarNav(); renderSchedule(); toggleSidebar(); };
+                    div.innerHTML = `<div><div class="nav-title">${name}</div></div>`;
+                    list.appendChild(div);
+                });
+                document.getElementById('currentWeekBadge').innerText = "Lecturer";
+            }
+        }
 
-        async function deletePresentation() {
-            if(!confirm("Remove your presentation?")) return;
-            let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
-            const pId = presenters[currentPresIndex].id;
-            presenters = presenters.filter(p => p.id !== pId);
-            await scheduleRef.doc(currentDetailId).update({ presenters });
-            closeModal('viewPresenterModal');
-        }
+        function getMinutes(timeStr) {
+            if (!timeStr) return 9999;
+            let startPart = timeStr.split('-')[0].trim(); 
+            if(startPart.toUpperCase().includes('TBC') || startPart.toUpperCase().includes('TBA')) return 9999;
+            let [time, modifier] = startPart.split(' '); 
+            if(!time || !modifier) return 9999;
+            let [hours, minutes] = time.split(':').map(Number);
+            if (modifier.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+            if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+            return (hours * 60) + minutes;
+        }
 
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('backdrop').classList.toggle('open'); }
-        function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); localStorage.setItem('theme',n); }
-        
-        function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').classList.remove('hidden'); document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
+        function renderSchedule() {
+            const container = document.getElementById('scheduleContainer');
+            container.innerHTML = '';
+            let filteredEvents = [];
+            if (viewMode === 'week') {
+                filteredEvents = allEvents.filter(e => e.week == currentWeek);
+                document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
+            } else {
+                if(!currentLecturer) return;
+                filteredEvents = allEvents.filter(e => e.lecturer === currentLecturer);
+                document.getElementById('mainHeaderTitle').innerText = currentLecturer;
+            }
+            
+            filteredEvents.sort((a, b) => {
+                if (a.date !== b.date) return a.date.localeCompare(b.date);
+                return getMinutes(a.time) - getMinutes(b.time);
+            });
 
-        function openEditModal(isEdit = false) {
-            const sel = document.getElementById('inpLecturerSelect');
-            sel.innerHTML = '<option value="">Select Lecturer...</option>';
-            lecturers.forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
+            if(filteredEvents.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 4rem; color: var(--text-muted);">No classes found.</div>`;
+                return;
+            }
 
-            if(isEdit) {
-                const ev = allEvents.find(e => e.id === currentDetailId);
-                document.getElementById('editId').value = ev.id;
-                document.getElementById('inpType').value = ev.type || "Lecture"; 
-                document.getElementById('inpTitle').value = ev.title;
-                document.getElementById('inpDate').value = ev.date;
-                document.getElementById('inpVenue').value = ev.venue === "TBA" ? "" : ev.venue;
-                document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || lecturerContacts[ev.lecturer] || "";
-                sel.value = lecturerContacts.hasOwnProperty(ev.lecturer) ? ev.lecturer : "Other";
-                checkLecturerSelect();
-                if(sel.value === "Other") document.getElementById('inpLecturerText').value = ev.lecturer;
-                document.getElementById('btnDelete').classList.remove('hidden');
-            } else {
-                document.getElementById('editId').value = "";
-                document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('btnDelete').classList.add('hidden');
-            }
-            closeModal('detailModal');
-            document.getElementById('editModal').classList.add('active');
-        }
+            const grouped = {};
+            filteredEvents.forEach(e => {
+                if(!grouped[e.date]) grouped[e.date] = [];
+                grouped[e.date].push(e);
+            });
 
-        function checkLecturerSelect() { document.getElementById('divOtherLecturer').classList.toggle('hidden', document.getElementById('inpLecturerSelect').value !== "Other"); }
+            const todayStr = new Date().toISOString().split('T')[0];
+            Object.keys(grouped).forEach(date => {
+                const dateObj = new Date(date);
+                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                const datePretty = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                const isToday = date === todayStr;
+                const dayBlock = document.createElement('div');
+                dayBlock.className = 'day-group';
+                dayBlock.dataset.dayName = dayName;
+                if(isToday) dayBlock.id = "todayMarker";
+                let headerHTML = `<div class="day-header"><span class="day-name">${dayName}</span><span class="day-date">${datePretty}</span>${isToday ? '<span class="today-badge">TODAY</span>' : ''}</div>`;
+                let cardsHTML = '';
+                grouped[date].forEach(ev => {
+                    const timeParts = ev.time && ev.time !== "TBA" ? ev.time.split(' ') : ["TBA", ""]; 
+                    cardsHTML += `<div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')"><div class="time-col"><span class="time-start">${timeParts[0]}</span><span class="time-ampm">${timeParts[1] || ''}</span></div><div class="info-col"><span class="card-type">${ev.type || 'Session'}</span><div class="card-title">${ev.title}</div><div class="card-meta"><span>${ev.lecturer}</span> • <span>${ev.venue}</span></div></div></div>`;
+                });
+                dayBlock.innerHTML = headerHTML + cardsHTML;
+                container.appendChild(dayBlock);
+            });
+            if(viewMode === 'week') appendNextWeekButton(container);
+        }
 
-        async function saveClass() {
-            const id = document.getElementById('editId').value;
-            let l = document.getElementById('inpLecturerSelect').value;
-            if(l === "Other") l = document.getElementById('inpLecturerText').value;
-            const start = document.getElementById('inpStartTime').value, end = document.getElementById('inpEndTime').value;
-            const data = { title: document.getElementById('inpTitle').value, lecturer: l, lecturerPhone: document.getElementById('inpLecturerPhone').value, date: document.getElementById('inpDate').value, time: (start&&end)?`${start}-${end}`:"TBA", venue: document.getElementById('inpVenue').value || "TBA", type: document.getElementById('inpType').value, week: calculateCurrentWeek() };
-            if(id) await scheduleRef.doc(id).update(data); else await scheduleRef.add(data);
-            closeModal('editModal');
-        }
+        function appendNextWeekButton(container) {
+            if (currentWeek < 8) {
+                const div = document.createElement('div');
+                div.className = 'next-week-container';
+                div.innerHTML = `<button class="btn-next-week" onclick="nextWeek()">Load Next Week ↓</button>`;
+                container.appendChild(div);
+            }
+        }
+        function nextWeek() { currentWeek++; renderSidebarNav(); renderSchedule(); }
 
-        async function deleteClass() { if(confirm("Delete?")) { await scheduleRef.doc(document.getElementById('editId').value).delete(); closeModal('editModal'); } }
+        let currentDetailId = null;
+        function openDetail(id) {
+            checkSidebar(); 
+            currentDetailId = id;
+            const ev = allEvents.find(e => e.id === id);
+            if(!ev) return;
 
-        currentWeek = calculateCurrentWeek();
-        renderSidebarNav();
-    </script>
+            document.getElementById('detailType').innerText = ev.type || 'SESSION';
+            document.getElementById('detailTitle').innerText = ev.title;
+            document.getElementById('detailTime').innerText = `${ev.time} • ${ev.date}`;
+            document.getElementById('detailLecturer').innerText = ev.lecturer;
+            document.getElementById('detailVenue').innerText = ev.venue;
+            document.getElementById('detailNotes').innerText = ev.notes || "No additional notes provided.";
+            
+            // --- CONTACT SECTION ---
+            const btnGroup = document.getElementById('contactSection');
+            btnGroup.innerHTML = ''; btnGroup.classList.add('hidden');
+            let phone = ev.lecturerPhone || lecturerContacts[ev.lecturer];
+            if (phone) {
+                btnGroup.innerHTML += `<a href="https://wa.me/${phone.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`;
+                btnGroup.classList.remove('hidden');
+            }
+            if (ev.extraPhone) {
+                btnGroup.innerHTML += `<a href="https://wa.me/${ev.extraPhone.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp" style="background:var(--bg-input); border-color:var(--border-color); color:var(--text-main)">WhatsApp Support</a>`;
+                btnGroup.classList.remove('hidden');
+            }
+
+            // --- PRESENTER SECTION ---
+            const presSec = document.getElementById('presenterSection');
+            const presList = document.getElementById('presenterList');
+            presList.innerHTML = '';
+            
+            if (ev.type === "BST" || ev.type === "Case Discussion") {
+                presSec.classList.remove('hidden');
+                if (ev.presenters && ev.presenters.length > 0) {
+                    ev.presenters.forEach((p, idx) => {
+                        const tag = document.createElement('div');
+                        tag.className = 'presenter-tag';
+                        tag.innerText = p.name;
+                        tag.onclick = () => viewPresenter(idx);
+                        presList.appendChild(tag);
+                    });
+                } else {
+                    presList.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted)">No students registered yet.</div>';
+                }
+            } else {
+                presSec.classList.add('hidden');
+            }
+            
+            document.getElementById('detailModal').classList.add('active');
+            document.getElementById('editBtn').classList.toggle('hidden', !isAdmin);
+        }
+
+        function closeModal(modalId) { 
+            document.getElementById(modalId).classList.remove('active'); 
+            if(modalId === 'detailModal') currentDetailId = null;
+        }
+
+        // --- PRESENTATION LOGIC ---
+        function openPresentForm() {
+            document.getElementById('inpPresName').value = '';
+            document.getElementById('inpPresCase').value = '';
+            document.getElementById('inpPresDetail').value = '';
+            document.getElementById('presentFormModal').classList.add('active');
+        }
+
+        async function submitPresentation() {
+            const name = document.getElementById('inpPresName').value;
+            const caseName = document.getElementById('inpPresCase').value;
+            const detail = document.getElementById('inpPresDetail').value;
+
+            if(!name || !caseName) { alert("Please enter your name and case."); return; }
+
+            const newPresenter = { name, caseName, detail, timestamp: new Date().getTime() };
+
+            try {
+                await scheduleRef.doc(currentDetailId).update({
+                    presenters: firebase.firestore.FieldValue.arrayUnion(newPresenter)
+                });
+                closeModal('presentFormModal');
+                // Session will auto-refresh via snapshot
+            } catch (e) { alert("Error saving: " + e.message); }
+        }
+
+        function viewPresenter(index) {
+            const ev = allEvents.find(e => e.id === currentDetailId);
+            const p = ev.presenters[index];
+            document.getElementById('viewPresName').innerText = p.name;
+            document.getElementById('viewPresCase').innerText = p.caseName;
+            document.getElementById('viewPresDetail').innerText = p.detail || "No details provided.";
+            document.getElementById('viewPresenterModal').classList.add('active');
+        }
+
+        // --- ADMIN LOGIC ---
+        function adminLogin() {
+            if(isAdmin) {
+                isAdmin = false;
+                document.getElementById('adminBtn').innerText = "Admin Login";
+                document.getElementById('fabBtn').classList.add('hidden');
+                document.getElementById('cleanBtn').classList.add('hidden');
+                alert("Logged out.");
+            } else {
+                if(prompt("Passcode:") === "admin123") {
+                    isAdmin = true;
+                    document.getElementById('adminBtn').innerText = "Logout";
+                    document.getElementById('fabBtn').classList.remove('hidden');
+                    document.getElementById('cleanBtn').classList.remove('hidden');
+                    if(currentDetailId) openDetail(currentDetailId);
+                }
+            }
+        }
+
+        function openEditModal(isEdit = false) {
+            const sel = document.getElementById('inpLecturerSelect');
+            sel.innerHTML = '<option value="">Select Lecturer...</option>';
+            lecturers.forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
+
+            if(isEdit) {
+                const ev = allEvents.find(e => e.id === currentDetailId);
+                document.getElementById('editId').value = ev.id;
+                document.getElementById('inpType').value = ev.type || "Lecture"; 
+                document.getElementById('inpTitle').value = ev.title;
+                document.getElementById('inpDate').value = ev.date;
+                document.getElementById('inpStartTime').value = ev.time !== "TBA" ? convertTo24Hour(ev.time.split(' - ')[0]) : "";
+                document.getElementById('inpEndTime').value = ev.time !== "TBA" ? convertTo24Hour(ev.time.split(' - ')[1]) : "";
+                document.getElementById('inpVenue').value = ev.venue === "TBA" ? "" : ev.venue;
+                document.getElementById('inpNotes').value = ev.notes || "";
+                document.getElementById('inpWeek').value = ev.week;
+                document.getElementById('inpExtraPhone').value = ev.extraPhone || "";
+                document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || lecturerContacts[ev.lecturer] || "";
+
+                if(lecturerContacts.hasOwnProperty(ev.lecturer)) {
+                    sel.value = ev.lecturer;
+                    document.getElementById('divOtherLecturer').classList.add('hidden');
+                } else {
+                    sel.value = "Other";
+                    document.getElementById('divOtherLecturer').classList.remove('hidden');
+                    document.getElementById('inpLecturerText').value = ev.lecturer;
+                }
+                document.getElementById('btnDelete').classList.remove('hidden');
+            } else {
+                document.getElementById('editId').value = "";
+                document.getElementById('inpTitle').value = "";
+                document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('inpVenue').value = "";
+                document.getElementById('btnDelete').classList.add('hidden');
+            }
+            closeModal('detailModal');
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function checkLecturerSelect() {
+            const val = document.getElementById('inpLecturerSelect').value;
+            document.getElementById('divOtherLecturer').classList.toggle('hidden', val !== "Other");
+        }
+
+        async function saveClass() {
+            const id = document.getElementById('editId').value;
+            let lect = document.getElementById('inpLecturerSelect').value;
+            if(lect === "Other") lect = document.getElementById('inpLecturerText').value;
+            
+            const start24 = document.getElementById('inpStartTime').value;
+            const end24 = document.getElementById('inpEndTime').value;
+            let finalTime = (start24 && end24) ? `${convertTo12Hour(start24)} - ${convertTo12Hour(end24)}` : "TBA";
+
+            const data = {
+                title: document.getElementById('inpTitle').value,
+                lecturer: lect,
+                lecturerPhone: document.getElementById('inpLecturerPhone').value,
+                extraPhone: document.getElementById('inpExtraPhone').value, 
+                date: document.getElementById('inpDate').value,
+                time: finalTime, 
+                venue: document.getElementById('inpVenue').value || "TBA",
+                notes: document.getElementById('inpNotes').value,
+                week: document.getElementById('inpWeek').value,
+                type: document.getElementById('inpType').value 
+            };
+            if(id) await scheduleRef.doc(id).update(data);
+            else await scheduleRef.add(data);
+            closeModal('editModal');
+        }
+
+        async function deleteClass() {
+            if(confirm("Delete this session?")) {
+                await scheduleRef.doc(document.getElementById('editId').value).delete();
+                closeModal('editModal');
+            }
+        }
+
+        function convertTo12Hour(time) {
+            let [h, m] = time.split(':');
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+
+        function convertTo24Hour(timeStr) {
+            if(!timeStr) return "";
+            const [time, modifier] = timeStr.split(' ');
+            let [h, m] = time.split(':');
+            if (h === '12') h = '00';
+            if (modifier === 'PM') h = parseInt(h, 10) + 12;
+            return `${String(h).padStart(2, '0')}:${m}`;
+        }
+
+        function editCurrentClass() { openEditModal(true); }
+        async function cleanDB() { if(confirm("Reset entire database?")) alert("Reset restricted."); }
+        currentWeek = calculateCurrentWeek();
+        renderSidebarNav();
+    </script>
 </body>
 </html>
+
+dont remove anything just add the edit function
