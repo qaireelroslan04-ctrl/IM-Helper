@@ -191,6 +191,7 @@
         .card-type { font-size: 0.65rem; text-transform: uppercase; font-weight: 700; background: var(--bg-input); color: var(--text-muted); padding: 2px 6px; border-radius: 4px; }
         .card-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0.25rem 0; }
         .card-meta { font-size: 0.85rem; color: var(--text-muted); }
+        .tbc-alert { color: var(--status-yellow); font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 
         .next-week-container { padding: 2rem 0; text-align: center; }
         .btn-next-week {
@@ -326,8 +327,8 @@
                 <div class="detail-row"><div class="detail-label">Case Name</div><div class="detail-value" id="viewPresCase"></div></div>
                 <div class="detail-row"><div class="detail-label">Details</div><div class="detail-note" id="viewPresDetail"></div></div>
                 <div class="btn-group" style="display:flex; gap:10px; flex-direction:row">
-                    <button class="btn btn-primary" style="flex:1" onclick="openEditPresenter()">Edit My Entry</button>
-                    <button class="btn btn-danger" style="flex:1" onclick="deletePresentation()">Remove Me</button>
+                    <button class="btn btn-primary" style="flex:1" onclick="openEditPresenter()">Edit</button>
+                    <button class="btn btn-danger" style="flex:1" onclick="deletePresentation()">Remove</button>
                 </div>
             </div>
         </div>
@@ -344,14 +345,14 @@
                     <label class="form-label">Lecturer</label>
                     <select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select>
                     <div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" style="margin-top:0.5rem"></div>
-                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Custom WhatsApp Phone" style="margin-top:0.5rem">
+                    <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Phone" style="margin-top:0.5rem">
                 </div>
                 <div class="form-group"><label class="form-label">Date</label><input type="date" id="inpDate" class="form-input"></div>
                 <div class="form-group time-row"><div class="time-block"><label class="form-label">Start</label><input type="time" id="inpStartTime" class="form-input"></div><div class="time-block"><label class="form-label">End</label><input type="time" id="inpEndTime" class="form-input"></div></div>
                 <div class="form-group"><label class="form-label">Venue</label><input type="text" id="inpVenue" class="form-input"></div>
                 <div class="form-group">
-                    <label class="form-label">Week</label>
-                    <select id="inpWeek" class="form-select"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option><option value="7">Week 7</option><option value="8">Week 8</option></select>
+                     <label class="form-label">Week</label>
+                     <select id="inpWeek" class="form-select"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option><option value="7">Week 7</option><option value="8">Week 8</option></select>
                 </div>
                 <div class="form-group"><label class="form-label">Notes</label><textarea id="inpNotes" class="form-input"></textarea></div>
                 <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
@@ -385,7 +386,12 @@
         });
 
         // --- NAVIGATION ---
-        function switchView(m) { viewMode = m; toggleSidebar(false); renderSidebarNav(); renderSchedule(); }
+        function switchView(m) { 
+            viewMode = m; 
+            document.getElementById('btnViewWeek').classList.toggle('active', m === 'week');
+            document.getElementById('btnViewLecturer').classList.toggle('active', m === 'lecturer');
+            toggleSidebar(false); renderSidebarNav(); renderSchedule(); 
+        }
         
         function toggleSidebar(force) { 
             const sb = document.getElementById('sidebar'), bd = document.getElementById('backdrop');
@@ -435,17 +441,24 @@
             
             const grouped = {}; filtered.forEach(e => { if(!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
             Object.keys(grouped).sort().forEach(date => {
-                const div = document.createElement('div'); 
-                div.className = 'day-group'; 
+                const div = document.createElement('div'); div.className = 'day-group'; 
                 div.dataset.dayName = new Date(date).toLocaleDateString('en-US',{weekday:'long'});
                 let cards = ''; grouped[date].forEach(ev => {
                     const t = ev.time || "TBA";
-                    cards += `<div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')"><div class="info-col"><span class="card-type">${ev.type}</span><div class="card-title">${ev.title}</div><div class="card-meta">${t} • ${ev.lecturer}</div></div></div>`;
+                    const isTBA = t.includes('TBA') || t.includes('TBC') || ev.venue.includes('TBA') || ev.venue.includes('TBC');
+                    cards += `<div class="class-card type-${(ev.type || 'Custom').split(' ')[0]}" onclick="openDetail('${ev.id}')">
+                        <div class="time-col"><span class="time-start">${t.split(' ')[0]}</span><span class="time-ampm">${t.split(' ')[1] || ''}</span></div>
+                        <div class="info-col">
+                            <span class="card-type">${ev.type}</span>
+                            <div class="card-title">${ev.title}</div>
+                            <div class="card-meta">${ev.lecturer} • ${ev.venue}</div>
+                            ${isTBA ? '<div class="tbc-alert">⚠ Confirmation Needed</div>' : ''}
+                        </div>
+                    </div>`;
                 });
                 div.innerHTML = `<div class="day-header"><span class="day-name">${div.dataset.dayName}</span><span class="day-date">${date}</span></div>` + cards;
                 container.appendChild(div);
             });
-
             if(viewMode === 'week') appendNextWeekButton(container);
         }
 
@@ -457,10 +470,8 @@
                 container.appendChild(div);
             }
         }
-
         function nextWeek() { currentWeek++; renderSidebarNav(); renderSchedule(); document.getElementById('scheduleContainer').scrollTop = 0; }
 
-        // --- SCROLL LOGIC ---
         const scrollContainer = document.getElementById('scheduleContainer');
         scrollContainer.addEventListener('scroll', () => {
             if (viewMode !== 'week') return;
@@ -476,7 +487,6 @@
             if (!found || scrollContainer.scrollTop < 50) document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
         });
 
-        // --- DETAILS ---
         function openDetail(id) {
             toggleSidebar(false);
             currentDetailId = id; const ev = allEvents.find(e => e.id === id); if(!ev) return;
@@ -487,7 +497,7 @@
             document.getElementById('detailVenue').innerText = ev.venue;
             document.getElementById('detailNotes').innerText = ev.notes || "None";
             
-            const btnGroup = document.getElementById('contactSection'); btnGroup.innerHTML = '';
+            const btnGroup = document.getElementById('contactSection'); btnGroup.innerHTML = ''; btnGroup.classList.add('hidden');
             let p = ev.lecturerPhone || lecturerContacts[ev.lecturer];
             if (p) { btnGroup.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; btnGroup.classList.remove('hidden'); }
 
@@ -505,18 +515,18 @@
             document.getElementById('editBtn').classList.toggle('hidden', !isAdmin);
         }
 
-        // --- PRESENTERS ---
         function viewPresenter(idx) {
             currentPresIndex = idx; const p = allEvents.find(e => e.id === currentDetailId).presenters[idx];
             document.getElementById('viewPresName').innerText = p.name;
             document.getElementById('viewPresCase').innerText = p.caseName || "Reservation Only";
-            document.getElementById('viewPresDetail').innerText = p.detail || "No details provided yet.";
+            document.getElementById('viewPresDetail').innerText = p.detail || "No details provided.";
             document.getElementById('viewPresenterModal').classList.add('active');
         }
 
         function openPresentForm() {
             document.getElementById('editPresenterId').value = "";
             document.getElementById('inpPresName').value = ""; document.getElementById('inpPresCase').value = ""; document.getElementById('inpPresDetail').value = "";
+            document.getElementById('presentFormTitle').innerText = "Register Presentation";
             document.getElementById('presentFormModal').classList.add('active');
         }
 
@@ -537,16 +547,31 @@
         }
 
         async function deletePresentation() {
-            if(!confirm("Remove registration?")) return;
+            if(!confirm("Remove entry?")) return;
             let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
             presenters.splice(currentPresIndex, 1);
             await scheduleRef.doc(currentDetailId).update({ presenters }); closeModal('viewPresenterModal');
         }
 
-        // --- ADMIN ---
-        function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').classList.remove('hidden'); document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='detailModal') currentDetailId=null; }
         function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); }
+        function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').classList.remove('hidden'); document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
+
+        function convertTo12Hour(time) {
+            let [h, m] = time.split(':');
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+
+        function convertTo24Hour(timeStr) {
+            if(!timeStr) return "";
+            const [time, modifier] = timeStr.split(' ');
+            let [h, m] = time.split(':');
+            if (h === '12' && modifier === 'AM') h = '00';
+            if (modifier === 'PM' && h !== '12') h = parseInt(h, 10) + 12;
+            return `${String(h).padStart(2, '0')}:${m}`;
+        }
 
         function openEditModal(isEdit = false) {
             const sel = document.getElementById('inpLecturerSelect');
@@ -559,6 +584,8 @@
                 document.getElementById('inpType').value = ev.type || "Lecture"; 
                 document.getElementById('inpTitle').value = ev.title;
                 document.getElementById('inpDate').value = ev.date;
+                document.getElementById('inpStartTime').value = (ev.time && ev.time !== "TBA") ? convertTo24Hour(ev.time.split(' - ')[0]) : "";
+                document.getElementById('inpEndTime').value = (ev.time && ev.time !== "TBA") ? convertTo24Hour(ev.time.split(' - ')[1]) : "";
                 document.getElementById('inpVenue').value = ev.venue;
                 document.getElementById('inpNotes').value = ev.notes || "";
                 document.getElementById('inpWeek').value = ev.week;
@@ -570,13 +597,13 @@
             } else {
                 document.getElementById('editId').value = "";
                 document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('inpWeek').value = currentWeek;
                 document.getElementById('btnDelete').classList.add('hidden');
             }
             closeModal('detailModal');
             document.getElementById('editModal').classList.add('active');
         }
 
+        function editCurrentClass() { openEditModal(true); }
         function checkLecturerSelect() { document.getElementById('divOtherLecturer').classList.toggle('hidden', document.getElementById('inpLecturerSelect').value !== "Other"); }
 
         async function saveClass() {
@@ -584,16 +611,20 @@
             let l = document.getElementById('inpLecturerSelect').value;
             if(l === "Other") l = document.getElementById('inpLecturerText').value;
             const start = document.getElementById('inpStartTime').value, end = document.getElementById('inpEndTime').value;
-            const data = { title: document.getElementById('inpTitle').value, lecturer: l, lecturerPhone: document.getElementById('inpLecturerPhone').value, date: document.getElementById('inpDate').value, time: (start&&end)?`${start}-${end}`:"TBA", venue: document.getElementById('inpVenue').value || "TBA", type: document.getElementById('inpType').value, week: document.getElementById('inpWeek').value, notes: document.getElementById('inpNotes').value };
+            let finalTime = (start && end) ? `${convertTo12Hour(start)} - ${convertTo12Hour(end)}` : "TBA";
+            const data = { 
+                title: document.getElementById('inpTitle').value, lecturer: l, lecturerPhone: document.getElementById('inpLecturerPhone').value, 
+                date: document.getElementById('inpDate').value, time: finalTime, venue: document.getElementById('inpVenue').value || "TBA", 
+                type: document.getElementById('inpType').value, week: document.getElementById('inpWeek').value, notes: document.getElementById('inpNotes').value 
+            };
             if(id) await scheduleRef.doc(id).update(data); else await scheduleRef.add(data);
             closeModal('editModal');
         }
 
-        async function deleteClass() { if(confirm("Delete?")) { await scheduleRef.doc(document.getElementById('editId').value).delete(); closeModal('editModal'); } }
+        async function deleteClass() { if(confirm("Delete session?")) { await scheduleRef.doc(document.getElementById('editId').value).delete(); closeModal('editModal'); } }
 
-        function editCurrentClass() { openEditModal(true); }
         currentWeek = calculateCurrentWeek();
-        renderSidebarNav();
+        renderSidebarNav(); renderSchedule();
     </script>
 </body>
 </html>
