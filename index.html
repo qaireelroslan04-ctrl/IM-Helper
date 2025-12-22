@@ -86,7 +86,7 @@
 
         /* --- SIDEBAR APPLE FIX --- */
         aside {
-            width: 320px; 
+            width: 300px; 
             background: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
             display: flex; 
@@ -97,14 +97,14 @@
 
         .nav-header { 
             padding: 1.2rem 1rem; 
-            padding-top: calc(1.2rem + env(safe-area-inset-top)); 
+            padding-top: calc(1rem + env(safe-area-inset-top)); 
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0; 
         }
 
         .view-toggle { display: flex; background: var(--bg-input); padding: 4px; border-radius: 12px; gap: 4px; }
-        .toggle-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px 2px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; }
-        .toggle-btn.active { background: var(--accent-color); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .toggle-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px 2px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+        .toggle-btn.active { background: var(--accent-color); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
         .nav-scroll-area { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
         .nav-item { padding: 1.2rem 1.5rem; cursor: pointer; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
@@ -132,7 +132,6 @@
         .time-col { display: flex; flex-direction: column; align-items: center; min-width: 60px; padding-right: 1rem; border-right: 1px solid var(--border-color); }
         .time-start { font-weight: 800; font-size: 1rem; color: var(--text-main); }
         .time-ampm { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-
         .info-col { flex: 1; }
         .card-type { font-size: 0.65rem; text-transform: uppercase; font-weight: 700; background: var(--bg-input); color: var(--text-muted); padding: 2px 6px; border-radius: 4px; }
         .card-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0.25rem 0; }
@@ -221,7 +220,7 @@
                 <div class="view-toggle">
                     <button id="btnViewWeek" class="toggle-btn active" onclick="switchView('week')">Week</button>
                     <button id="btnViewLecturer" class="toggle-btn" onclick="switchView('lecturer')">Lecturer</button>
-                    <button id="btnViewGroup" class="toggle-btn" onclick="switchView('group')">Group</button>
+                    <button id="btnViewMember" class="toggle-btn" onclick="switchView('member')">Member</button>
                 </div>
             </div>
             <div id="weekList" class="nav-scroll-area"></div>
@@ -258,13 +257,25 @@
 
     <div id="presentFormModal" class="modal-overlay">
         <div class="detail-sheet">
-            <div class="sheet-header"><h2 id="presentFormTitle">Register Presenter</h2><button class="sheet-close" onclick="closeModal('presentFormModal')">×</button></div>
+            <div class="sheet-header"><h2 id="presentFormTitle">Presentation Spot</h2><button class="sheet-close" onclick="closeModal('presentFormModal')">×</button></div>
             <div class="sheet-body">
                 <input type="hidden" id="editPresenterId">
-                <div class="form-group"><label class="form-label">Name (Required)</label><select id="inpPresName" class="form-select"><option value="">Choose...</option><option value="Aina">Aina</option><option value="Amy">Amy</option><option value="Clarissa">Clarissa</option><option value="Danisha">Danisha</option><option value="Qaireel">Qaireel</option><option value="Sashmitha">Sashmitha</option><option value="Xin Ee">Xin Ee</option></select></div>
+                <div class="form-group">
+                    <label class="form-label">Name (Required)</label>
+                    <select id="inpPresName" class="form-select">
+                        <option value="">Choose Name...</option>
+                        <option value="Aina">Aina</option>
+                        <option value="Amy">Amy</option>
+                        <option value="Clarissa">Clarissa</option>
+                        <option value="Danisha">Danisha</option>
+                        <option value="Qaireel">Qaireel</option>
+                        <option value="Sashmitha">Sashmitha</option>
+                        <option value="Xin Ee">Xin Ee</option>
+                    </select>
+                </div>
                 <div class="form-group"><label class="form-label">Case Name (Optional)</label><input type="text" id="inpPresCase" class="form-input"></div>
                 <div class="form-group"><label class="form-label">Key Details (Optional)</label><textarea id="inpPresDetail" class="form-input" rows="4"></textarea></div>
-                <button onclick="submitPresentation()" class="btn btn-primary">Save Info</button>
+                <button onclick="submitPresentation()" class="btn btn-primary">Save Entry</button>
             </div>
         </div>
     </div>
@@ -299,7 +310,10 @@
                 <div class="form-group"><label class="form-label">Date</label><input type="date" id="inpDate" class="form-input"></div>
                 <div class="form-group time-row"><div class="time-block"><label class="form-label">Start</label><input type="time" id="inpStartTime" class="form-input"></div><div class="time-block"><label class="form-label">End</label><input type="time" id="inpEndTime" class="form-input"></div></div>
                 <div class="form-group"><label class="form-label">Venue</label><input type="text" id="inpVenue" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Week</label><select id="inpWeek" class="form-select"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
+                <div class="form-group">
+                     <label class="form-label">Week</label>
+                     <select id="inpWeek" class="form-select"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select>
+                </div>
                 <div class="form-group"><label class="form-label">Notes</label><textarea id="inpNotes" class="form-input"></textarea></div>
                 <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
                 <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Session</button>
@@ -327,11 +341,22 @@
 
         function switchView(m) { 
             viewMode = m; 
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.id === 'btnView' + m.charAt(0).toUpperCase() + m.slice(1)));
-            toggleSidebar(false); renderSidebarNav(); renderSchedule(); 
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            const btnId = 'btnView' + m.charAt(0).toUpperCase() + m.slice(1);
+            const targetBtn = document.getElementById(btnId);
+            if(targetBtn) targetBtn.classList.add('active');
+            
+            renderSidebarNav(); renderSchedule(); 
         }
-        function toggleSidebar(f) { const s=document.getElementById('sidebar'), b=document.getElementById('backdrop'); if(f===true){s.classList.add('open');b.classList.add('open');}else if(f===false){s.classList.remove('open');b.classList.remove('open');}else{s.classList.toggle('open');b.classList.toggle('open');} }
-        function calculateCurrentWeek() { const s=new Date('2025-12-22T00:00:00'), t=new Date(); return t<s?1:Math.min(8, Math.ceil(Math.ceil(Math.abs(t-s)/(1000*60*60*24))/7)); }
+        
+        function toggleSidebar(force) { 
+            const sb = document.getElementById('sidebar'), bd = document.getElementById('backdrop');
+            if (force === true) { sb.classList.add('open'); bd.classList.add('open'); }
+            else if (force === false) { sb.classList.remove('open'); bd.classList.remove('open'); }
+            else { sb.classList.toggle('open'); bd.classList.toggle('open'); }
+        }
+
+        function calculateCurrentWeek() { const s = new Date('2025-12-22T00:00:00'), t = new Date(); return t < s ? 1 : Math.min(8, Math.ceil(Math.ceil(Math.abs(t - s) / (1000*60*60*24)) / 7)); }
 
         function renderSidebarNav() {
             const list = document.getElementById('weekList'); list.innerHTML = '';
@@ -366,9 +391,12 @@
             
             if (viewMode === 'week') document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
             else if (viewMode === 'lecturer' && currentLecturer) document.getElementById('mainHeaderTitle').innerText = currentLecturer;
-            else if (viewMode === 'group' && currentMember) document.getElementById('mainHeaderTitle').innerText = "Cases: " + currentMember;
+            else if (viewMode === 'member' && currentMember) document.getElementById('mainHeaderTitle').innerText = "Cases: " + currentMember;
 
-            if(filtered.length === 0) { container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; if(viewMode === 'week') appendNextWeekButton(container); return; }
+            if(filtered.length === 0) { 
+                container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; 
+                if(viewMode === 'week') appendNextWeekButton(container); return; 
+            }
             
             const grouped = {}; filtered.forEach(e => { if(!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
             Object.keys(grouped).sort().forEach(date => {
@@ -409,7 +437,6 @@
                 const rect = group.getBoundingClientRect();
                 if (rect.top <= 120 && rect.bottom > 60) { document.getElementById('mainHeaderTitle').innerText = group.dataset.dayName; return; }
             }
-            if (document.getElementById('scheduleContainer').scrollTop < 50) document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
         });
 
         function openDetail(id) {
@@ -443,7 +470,7 @@
         function viewPresenter(idx) {
             currentPresIndex = idx; const p = allEvents.find(e => e.id === currentDetailId).presenters[idx];
             document.getElementById('viewPresName').innerText = p.name;
-            document.getElementById('viewPresCase').innerText = p.caseName || "Unspecified (Spot Only)";
+            document.getElementById('viewPresCase').innerText = p.caseName || "Registration Only";
             document.getElementById('viewPresDetail').innerText = p.detail || "No details provided.";
             document.getElementById('viewPresenterModal').classList.add('active');
         }
@@ -473,7 +500,7 @@
         }
 
         async function deletePresentation() {
-            if(!confirm("Remove?")) return;
+            if(!confirm("Remove registration?")) return;
             let presenters = allEvents.find(e => e.id === currentDetailId).presenters || [];
             presenters.splice(currentPresIndex, 1);
             await scheduleRef.doc(currentDetailId).update({ presenters }); closeModal('viewPresenterModal');
