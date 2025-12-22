@@ -192,6 +192,14 @@
         .card-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0.25rem 0; }
         .card-meta { font-size: 0.85rem; color: var(--text-muted); }
 
+        .next-week-container { padding: 2rem 0; text-align: center; }
+        .btn-next-week {
+            background-color: var(--bg-input); color: var(--accent-color); border: 1px solid var(--border-color);
+            padding: 1rem 2rem; border-radius: 2rem; font-weight: 700; font-size: 1rem; cursor: pointer;
+            transition: all 0.2s; width: 100%; max-width: 300px;
+        }
+        .btn-next-week:hover { background-color: var(--accent-bg); border-color: var(--accent-color); }
+
         /* --- MODALS --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
@@ -250,7 +258,7 @@
     </header>
 
     <div class="main-container">
-        <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
+        <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)"></div>
         
         <aside id="sidebar">
             <div class="nav-header">
@@ -291,7 +299,7 @@
                 <div id="presenterSection" class="presenter-section hidden">
                     <div class="detail-label">Students Presenting</div>
                     <div id="presenterList" class="presenter-list"></div>
-                    <button class="btn btn-primary" onclick="openPresentForm()">I'm Presenting</button>
+                    <button class="btn btn-primary" onclick="openPresentForm()" style="margin-top: 1rem;">I'm Presenting</button>
                 </div>
                 
                 <button id="editBtn" class="hidden btn btn-ghost" style="margin-top:1rem" onclick="editCurrentClass()">Edit Class (Admin)</button>
@@ -340,7 +348,16 @@
                     <input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Phone" style="margin-top:0.5rem">
                 </div>
                 <div class="form-group"><label class="form-label">Date</label><input type="date" id="inpDate" class="form-input"></div>
+                <div class="form-group time-row"><div class="time-block"><label class="form-label">Start</label><input type="time" id="inpStartTime" class="form-input"></div><div class="time-block"><label class="form-label">End</label><input type="time" id="inpEndTime" class="form-input"></div></div>
                 <div class="form-group"><label class="form-label">Venue</label><input type="text" id="inpVenue" class="form-input"></div>
+                <div class="form-group">
+                     <label class="form-label">Week</label>
+                     <select id="inpWeek" class="form-select">
+                         <option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option>
+                         <option value="4">Week 4</option><option value="5">Week 5</option><option value="6">Week 6</option>
+                         <option value="7">Week 7</option><option value="8">Week 8</option>
+                     </select>
+                </div>
                 <button onclick="saveClass()" class="btn btn-primary">Save Changes</button>
                 <button onclick="deleteClass()" id="btnDelete" class="hidden btn btn-danger">Delete Class</button>
             </div>
@@ -378,6 +395,8 @@
             else { sb.classList.toggle('open'); bd.classList.toggle('open'); }
         }
 
+        function calculateCurrentWeek() { const s = new Date('2025-12-22T00:00:00'), t = new Date(), diff = Math.ceil(Math.abs(t - s) / (1000*60*60*24)); return t < s ? 1 : Math.min(8, Math.ceil(diff / 7)); }
+
         function renderSidebarNav() {
             const list = document.getElementById('weekList'); list.innerHTML = '';
             if (viewMode === 'week') {
@@ -404,7 +423,13 @@
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer'); container.innerHTML = '';
             let filtered = viewMode === 'week' ? allEvents.filter(e => e.week == currentWeek) : allEvents.filter(e => e.lecturer === currentLecturer);
-            if(filtered.length === 0) { container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; return; }
+            
+            if(filtered.length === 0) { 
+                container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; 
+                if(viewMode === 'week') appendNextWeekButton(container);
+                return; 
+            }
+            
             const grouped = {}; filtered.forEach(e => { if(!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
             Object.keys(grouped).sort().forEach(date => {
                 const div = document.createElement('div'); div.className = 'day-group';
@@ -415,9 +440,28 @@
                 div.innerHTML = `<div class="day-header"><span class="day-name">${new Date(date).toLocaleDateString('en-US',{weekday:'long'})}</span></div>` + cards;
                 container.appendChild(div);
             });
+
+            if(viewMode === 'week') appendNextWeekButton(container);
+        }
+
+        function appendNextWeekButton(container) {
+            if (currentWeek < 8) {
+                const div = document.createElement('div');
+                div.className = 'next-week-container';
+                div.innerHTML = `<button class="btn-next-week" onclick="nextWeek()">Load Next Week ↓</button>`;
+                container.appendChild(div);
+            }
+        }
+
+        function nextWeek() { 
+            currentWeek++; 
+            renderSidebarNav(); 
+            renderSchedule(); 
+            document.getElementById('scheduleContainer').scrollTop = 0;
         }
 
         function openDetail(id) {
+            toggleSidebar(false);
             currentDetailId = id; const ev = allEvents.find(e => e.id === id); if(!ev) return;
             document.getElementById('detailType').innerText = ev.type;
             document.getElementById('detailTitle').innerText = ev.title;
@@ -428,7 +472,10 @@
             
             const btnGroup = document.getElementById('contactSection'); btnGroup.innerHTML = '';
             let p = ev.lecturerPhone || lecturerContacts[ev.lecturer];
-            if (p) { btnGroup.innerHTML += `<a href="https://wa.me/${p}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; btnGroup.classList.remove('hidden'); }
+            if (p) { 
+                btnGroup.innerHTML += `<a href="https://wa.me/${p.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp">WhatsApp Lecturer</a>`; 
+                btnGroup.classList.remove('hidden'); 
+            }
 
             const presSec = document.getElementById('presenterSection'), presList = document.getElementById('presenterList');
             presList.innerHTML = '';
@@ -482,10 +529,82 @@
         }
 
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        function calculateCurrentWeek() { const s = new Date('2025-12-22T00:00:00'), t = new Date(), diff = Math.ceil(Math.abs(t - s) / (1000*60*60*24)); return t < s ? 1 : Math.min(8, Math.ceil(diff / 7)); }
-        function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').classList.remove('hidden'); document.getElementById('adminBtn').innerText = "Logout"; } }
-        function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); }
+        function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').classList.remove('hidden'); document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
+        function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); localStorage.setItem('theme',n); }
         
+        function convertTo12Hour(time) {
+            let [h, m] = time.split(':');
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+
+        function convertTo24Hour(timeStr) {
+            if(!timeStr) return "";
+            const [time, modifier] = timeStr.split(' ');
+            let [h, m] = time.split(':');
+            if (h === '12' && modifier === 'AM') h = '00';
+            if (modifier === 'PM' && h !== '12') h = parseInt(h, 10) + 12;
+            return `${String(h).padStart(2, '0')}:${m}`;
+        }
+
+        function openEditModal(isEdit = false) {
+            const sel = document.getElementById('inpLecturerSelect');
+            sel.innerHTML = '<option value="">Select Lecturer...</option>';
+            lecturers.forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
+
+            if(isEdit) {
+                const ev = allEvents.find(e => e.id === currentDetailId);
+                document.getElementById('editId').value = ev.id;
+                document.getElementById('inpType').value = ev.type || "Lecture"; 
+                document.getElementById('inpTitle').value = ev.title;
+                document.getElementById('inpDate').value = ev.date;
+                document.getElementById('inpStartTime').value = (ev.time && ev.time !== "TBA") ? convertTo24Hour(ev.time.split(' - ')[0]) : "";
+                document.getElementById('inpEndTime').value = (ev.time && ev.time !== "TBA") ? convertTo24Hour(ev.time.split(' - ')[1]) : "";
+                document.getElementById('inpVenue').value = ev.venue === "TBA" ? "" : ev.venue;
+                document.getElementById('inpNotes').value = ev.notes || "";
+                document.getElementById('inpWeek').value = ev.week;
+                document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || "";
+                sel.value = lecturerContacts.hasOwnProperty(ev.lecturer) ? ev.lecturer : "Other";
+                checkLecturerSelect();
+                if(sel.value === "Other") document.getElementById('inpLecturerText').value = ev.lecturer;
+                document.getElementById('btnDelete').classList.remove('hidden');
+            } else {
+                document.getElementById('editId').value = "";
+                document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('inpWeek').value = currentWeek;
+                document.getElementById('btnDelete').classList.add('hidden');
+            }
+            closeModal('detailModal');
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function editCurrentClass() { openEditModal(true); }
+        function checkLecturerSelect() { document.getElementById('divOtherLecturer').classList.toggle('hidden', document.getElementById('inpLecturerSelect').value !== "Other"); }
+
+        async function saveClass() {
+            const id = document.getElementById('editId').value;
+            let l = document.getElementById('inpLecturerSelect').value;
+            if(l === "Other") l = document.getElementById('inpLecturerText').value;
+            const start = document.getElementById('inpStartTime').value, end = document.getElementById('inpEndTime').value;
+            let finalTime = (start && end) ? `${convertTo12Hour(start)} - ${convertTo12Hour(end)}` : "TBA";
+            const data = { 
+                title: document.getElementById('inpTitle').value, 
+                lecturer: l, 
+                lecturerPhone: document.getElementById('inpLecturerPhone').value, 
+                date: document.getElementById('inpDate').value, 
+                time: finalTime, 
+                venue: document.getElementById('inpVenue').value || "TBA", 
+                type: document.getElementById('inpType').value, 
+                week: document.getElementById('inpWeek').value,
+                notes: document.getElementById('inpNotes').value
+            };
+            if(id) await scheduleRef.doc(id).update(data); else await scheduleRef.add(data);
+            closeModal('editModal');
+        }
+
+        async function deleteClass() { if(confirm("Delete?")) { await scheduleRef.doc(document.getElementById('editId').value).delete(); closeModal('editModal'); } }
+
         currentWeek = calculateCurrentWeek();
         renderSidebarNav(); renderSchedule();
     </script>
