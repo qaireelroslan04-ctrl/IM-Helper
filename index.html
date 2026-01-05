@@ -152,6 +152,7 @@
                     <button id="btnViewWeek" class="toggle-btn active" onclick="switchView('week')">Week</button>
                     <button id="btnViewLecturer" class="toggle-btn" onclick="switchView('lecturer')">Lecturer</button>
                     <button id="btnViewMember" class="toggle-btn" onclick="switchView('member')">Member</button>
+                    <button id="btnViewReminder" class="toggle-btn" onclick="switchView('reminder')">🔔</button>
                 </div>
             </div>
             <div id="weekList" class="nav-scroll-area"></div>
@@ -227,7 +228,16 @@
             <div class="sheet-header"><h2>Manage Session</h2><button class="sheet-close" onclick="closeModal('editModal')">×</button></div>
             <div class="sheet-body">
                 <input type="hidden" id="editId">
-                <div class="form-group"><label class="form-label">Type</label><select id="inpType" class="form-select"><option value="Lecture">Lecture</option><option value="BST">BST</option><option value="Case Discussion">Case Discussion</option><option value="Seminar">Seminar</option><option value="Exam">Exam</option><option value="Custom">Other</option></select></div>
+                <div class="form-group"><label class="form-label">Type</label>
+                    <select id="inpType" class="form-select" onchange="toggleTimeInputs()">
+                        <option value="Lecture">Lecture</option>
+                        <option value="BST">BST</option>
+                        <option value="Case Discussion">Case Discussion</option>
+                        <option value="Seminar">Seminar</option>
+                        <option value="Exam">Exam</option>
+                        <option value="Reminder">Reminder</option> <option value="Custom">Other</option>
+                    </select>   
+                </div>
                 <div class="form-group"><label class="form-label">Title</label><input type="text" id="inpTitle" class="form-input"></div>
                 <div class="form-group"><label class="form-label">Lecturer</label><select id="inpLecturerSelect" class="form-select" onchange="checkLecturerSelect()"></select><div id="divOtherLecturer" class="hidden"><input type="text" id="inpLecturerText" class="form-input" style="margin-top:0.5rem"></div><input type="tel" id="inpLecturerPhone" class="form-input" placeholder="Phone" style="margin-top:0.5rem"></div>
                 <div class="form-group"><label class="form-label">Date</label><input type="date" id="inpDate" class="form-input"></div>
@@ -254,11 +264,35 @@
         let allEvents = [], currentWeek = 1, viewMode = 'week', currentLecturer = null, currentMember = null, isAdmin = false, currentDetailId = null, currentPresIndex = null;
         let isNotifyEnabled = localStorage.getItem('notifications') === 'true';
 
-        scheduleRef.orderBy("date").orderBy("time").onSnapshot(s => {
+        // EDITED: Added client-side sorting to fix AM/PM ordering
+        scheduleRef.orderBy("date").onSnapshot(s => {
             allEvents = s.docs.map(d => ({ id: d.id, ...d.data() }));
+            
+            // Sort logic: First by Date, then by Time (using the helper to parse AM/PM)
+            allEvents.sort((a, b) => {
+                if (a.date !== b.date) return a.date.localeCompare(b.date);
+                return getMinutes(a.time) - getMinutes(b.time);
+            });
+        
             renderSidebarNav(); renderSchedule();
             if(currentDetailId) openDetail(currentDetailId);
         });
+
+        function toggleTimeInputs() {
+            const type = document.getElementById('inpType').value;
+            const isReminder = type === 'Reminder';
+            // Hide/Show time inputs and Venue based on type
+            document.querySelector('.time-row').style.display = isReminder ? 'none' : 'flex';
+            document.getElementById('inpVenue').closest('.form-group').style.display = isReminder ? 'none' : 'block';
+            
+            // Auto-fill venue/lecturer for reminders to keep DB clean
+            if(isReminder) {
+                document.getElementById('inpVenue').value = 'Reminder';
+                document.getElementById('inpLecturerSelect').value = 'Other';
+                document.getElementById('inpLecturerText').value = 'System';
+                document.getElementById('divOtherLecturer').classList.add('hidden');
+            }
+        }
 
         function switchView(m) { 
             viewMode = m; 
@@ -293,15 +327,23 @@
                     div.innerHTML = `<div class="nav-title">${n}</div>`; list.appendChild(div);
                 });
                 document.getElementById('currentWeekBadge').innerText = "Member";
+            } else if (viewMode === 'reminder') {
+                // Simple list for reminders
+                const div = document.createElement('div'); 
+                div.className = 'nav-item active';
+                div.innerHTML = `<div class="nav-title">All Reminders</div>`;
+                list.appendChild(div);
+                document.getElementById('currentWeekBadge').innerText = "Reminders";
             }
         }
 
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer'); container.innerHTML = '';
-            let filtered = (viewMode === 'week') ? allEvents.filter(e => e.week == currentWeek) : (viewMode === 'lecturer') ? allEvents.filter(e => e.lecturer === currentLecturer) : allEvents.filter(e => e.presenters && e.presenters.some(p => p.name === currentMember));
-            if (viewMode === 'week') document.getElementById('mainHeaderTitle').innerText = "Internal Medicine";
-            else if (viewMode === 'lecturer' && currentLecturer) document.getElementById('mainHeaderTitle').innerText = currentLecturer;
-            else if (viewMode === 'member' && currentMember) document.getElementById('mainHeaderTitle').innerText = "Cases: " + currentMember;
+            let filtered;
+            if (viewMode === 'week') filtered = allEvents.filter(e => e.week == currentWeek && e.type !== 'Reminder');
+            else if (viewMode === 'lecturer') filtered = allEvents.filter(e => e.lecturer === currentLecturer);
+            else if (viewMode === 'member') filtered = allEvents.filter(e => e.presenters && e.presenters.some(p => p.name === currentMember));
+            else if (viewMode === 'reminder') filtered = allEvents.filter(e => e.type === 'Reminder');
             if(filtered.length === 0) { container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; if(viewMode === 'week') appendNextWeekButton(container); return; }
             const grouped = {}; filtered.forEach(e => { if(!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
             Object.keys(grouped).sort().forEach(date => {
@@ -404,7 +446,7 @@
             const sel = document.getElementById('inpLecturerSelect'); sel.innerHTML = '<option value="">Select Lecturer...</option>'; lecturers.forEach(l => sel.innerHTML += `<option value="${l}">${l}</option>`);
             if(isEdit) {
                 const ev = allEvents.find(e => e.id === currentDetailId);
-                document.getElementById('editId').value = ev.id; document.getElementById('inpType').value = ev.type || "Lecture"; document.getElementById('inpTitle').value = ev.title; document.getElementById('inpDate').value = ev.date; document.getElementById('inpVenue').value = ev.venue; document.getElementById('inpNotes').value = ev.notes || ""; document.getElementById('inpWeek').value = ev.week; document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || "";
+                document.getElementById('editId').value = ev.id; document.getElementById('inpType').value = ev.type || "Lecture"; toggleTimeInputs(); document.getElementById('inpTitle').value = ev.title; document.getElementById('inpDate').value = ev.date; document.getElementById('inpVenue').value = ev.venue; document.getElementById('inpNotes').value = ev.notes || ""; document.getElementById('inpWeek').value = ev.week; document.getElementById('inpLecturerPhone').value = ev.lecturerPhone || "";
                 sel.value = lecturerContacts.hasOwnProperty(ev.lecturer) ? ev.lecturer : "Other"; document.getElementById('divOtherLecturer').classList.toggle('hidden', sel.value !== "Other"); if(sel.value === "Other") document.getElementById('inpLecturerText').value = ev.lecturer; document.getElementById('btnDelete').classList.remove('hidden');
                 if(ev.time && ev.time !== "TBA") { const times = ev.time.split(' - '); document.getElementById('inpStartTime').value = convertTo24Hour(times[0]); document.getElementById('inpEndTime').value = convertTo24Hour(times[1]); }
             } else { document.getElementById('editId').value = ""; document.getElementById('inpDate').value = new Date().toISOString().split('T')[0]; document.getElementById('btnDelete').classList.add('hidden'); document.getElementById('inpWeek').value = currentWeek; }
