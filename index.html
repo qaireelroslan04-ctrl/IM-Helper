@@ -305,6 +305,7 @@
 
         function renderSidebarNav() {
             const list = document.getElementById('weekList'); list.innerHTML = '';
+            
             if (viewMode === 'week') {
                 for(let i=1; i<=8; i++) {
                     const div = document.createElement('div'); div.className = `nav-item ${i === currentWeek ? 'active' : ''}`;
@@ -312,6 +313,7 @@
                     div.innerHTML = `<div class="nav-title">Week ${i}</div>`; list.appendChild(div);
                 }
                 document.getElementById('currentWeekBadge').innerText = `Week ${currentWeek}`;
+            
             } else if (viewMode === 'lecturer') {
                 const names = new Set(Object.keys(lecturerContacts)); allEvents.forEach(e => { if(e.lecturer) names.add(e.lecturer); });
                 Array.from(names).sort().forEach(n => {
@@ -320,15 +322,16 @@
                     div.innerHTML = `<div class="nav-title">${n}</div>`; list.appendChild(div);
                 });
                 document.getElementById('currentWeekBadge').innerText = "Lecturer";
-            } else {
+            
+            } else if (viewMode === 'member') { // <--- CHANGED FROM 'else' TO 'else if'
                 groupMembers.forEach(n => {
                     const div = document.createElement('div'); div.className = `nav-item ${n === currentMember ? 'active' : ''}`;
                     div.onclick = () => { currentMember = n; toggleSidebar(false); renderSidebarNav(); renderSchedule(); };
                     div.innerHTML = `<div class="nav-title">${n}</div>`; list.appendChild(div);
                 });
                 document.getElementById('currentWeekBadge').innerText = "Member";
+            
             } else if (viewMode === 'reminder') {
-                // Simple list for reminders
                 const div = document.createElement('div'); 
                 div.className = 'nav-item active';
                 div.innerHTML = `<div class="nav-title">All Reminders</div>`;
