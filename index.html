@@ -458,10 +458,55 @@
         function editCurrentClass() { openEditModal(true); }
         function checkLecturerSelect() { document.getElementById('divOtherLecturer').classList.toggle('hidden', document.getElementById('inpLecturerSelect').value !== "Other"); }
         async function saveClass() {
-            const id = document.getElementById('editId').value; let l = document.getElementById('inpLecturerSelect').value; if(l === "Other") l = document.getElementById('inpLecturerText').value;
-            const s = document.getElementById('inpStartTime').value, e = document.getElementById('inpEndTime').value; let f = (s && e) ? `${convertTo12Hour(s)} - ${convertTo12Hour(e)}` : "TBA";
-            const data = { title: document.getElementById('inpTitle').value, lecturer: l, lecturerPhone: document.getElementById('inpLecturerPhone').value, date: document.getElementById('inpDate').value, time: f, venue: document.getElementById('inpVenue').value || "TBA", type: document.getElementById('inpType').value, week: document.getElementById('inpWeek').value, notes: document.getElementById('inpNotes').value };
-            if(id) await scheduleRef.doc(id).update(data); else await scheduleRef.add(data); closeModal('editModal');
+            // 1. UI Feedback: Disable button to prevent double-clicks and show status
+            const saveBtn = document.querySelector('#editModal .btn-primary');
+            const originalText = saveBtn.innerText;
+            saveBtn.innerText = "Saving...";
+            saveBtn.disabled = true;
+
+            try {
+                const id = document.getElementById('editId').value;
+                let l = document.getElementById('inpLecturerSelect').value;
+                if(l === "Other") l = document.getElementById('inpLecturerText').value || "TBA";
+
+                const s = document.getElementById('inpStartTime').value;
+                const e = document.getElementById('inpEndTime').value;
+                
+                // Logic to handle time formatting safely
+                let f = "TBA";
+                if (s && e) {
+                    f = `${convertTo12Hour(s)} - ${convertTo12Hour(e)}`;
+                } else if (document.getElementById('inpType').value === "Reminder") {
+                    f = "All Day"; // Or keep as TBA
+                }
+
+                // 2. Prepare Data with strict parsing for Week
+                const data = { 
+                    title: document.getElementById('inpTitle').value || "Untitled",
+                    lecturer: l, 
+                    lecturerPhone: document.getElementById('inpLecturerPhone').value, 
+                    date: document.getElementById('inpDate').value, 
+                    time: f, 
+                    venue: document.getElementById('inpVenue').value || "TBA", 
+                    type: document.getElementById('inpType').value, 
+                    week: parseInt(document.getElementById('inpWeek').value) || currentWeek, // Ensure Number type
+                    notes: document.getElementById('inpNotes').value 
+                };
+
+                // 3. Send to Firebase
+                if(id) await scheduleRef.doc(id).update(data); 
+                else await scheduleRef.add(data);
+                
+                closeModal('editModal');
+
+            } catch (error) {
+                console.error("Error saving class:", error);
+                alert("Failed to save: " + error.message); // Alert user if something goes wrong
+            } finally {
+                // 4. Restore button state
+                saveBtn.innerText = originalText;
+                saveBtn.disabled = false;
+            }
         }
         async function deleteClass() { if(confirm("Delete?")) { await scheduleRef.doc(document.getElementById('editId').value).delete(); closeModal('editModal'); } }
 
