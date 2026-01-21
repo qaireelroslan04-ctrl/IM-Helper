@@ -12,6 +12,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
     <style>
         :root {
@@ -256,6 +257,34 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const scheduleRef = db.collection("schedule_group_b");
+        const auth = firebase.auth();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        const allowedAdminEmail = "qaireelroslan04@gmail.com";
+
+        // Listen for login state changes (Handles "Remember Me")
+        auth.onAuthStateChanged(user => {
+            if (user && user.email === allowedAdminEmail) {
+                isAdmin = true;
+                // Update UI for Admin
+                document.getElementById('fabBtn').style.display = 'flex';
+                document.getElementById('adminBtn').innerText = "Logout";
+                // If a card is open, show the edit button immediately
+                if(currentDetailId) document.getElementById('editBtn').classList.remove('hidden');
+                console.log("Admin logged in as: " + user.email);
+            } else {
+                isAdmin = false;
+                // Hide Admin UI
+                document.getElementById('fabBtn').style.display = 'none';
+                document.getElementById('adminBtn').innerText = "Admin Login";
+                if(currentDetailId) document.getElementById('editBtn').classList.add('hidden');
+                
+                // If logged in but wrong email, force logout
+                if (user) {
+                    alert("Access Denied: " + user.email + " is not an admin.");
+                    auth.signOut();
+                }
+            }
+        });
 
         const lecturerContacts = { "Dr Affizal Samsudin": "60176631789", "Dr Asri B Said": "60138021143", "Dr Chai Chee Shee": "60198188265", "Dr Chan En Ze": "60105054955", "Dr Chow Han Bing": "60192712889", "Dr Diana Ng": "60198198265", "Dr Frederick De Rozario": "60168678252", "Dr Henry Gudum": "60198895047", "Dr Joshua Chung": "60168963966", "Dr Kuan Jew Win": "60198593011", "Dr Ling Hwei Sung": "60128939596", "Dr Loh Huai Heng": "60122010765", "Dr Sim Chun Yang": "60138273338", "Dr Sim Sing Yee": "60138338862", "Dr Yeoh Cheng Wooi": "60182628290" };
         const lecturers = Object.keys(lecturerContacts).sort(); lecturers.push("Other");
@@ -438,7 +467,18 @@
         }, 60000);
 
         // --- ADMIN ---
-        function adminLogin() { if(prompt("Passcode:") === "admin123") { isAdmin = true; document.getElementById('fabBtn').style.display = 'flex'; document.getElementById('adminBtn').innerText = "Logout"; if(currentDetailId) openDetail(currentDetailId); } }
+        function adminLogin() {
+            if (isAdmin) {
+                // If currently admin, log out
+                auth.signOut().then(() => alert("Logged out successfully."));
+            } else {
+                // Trigger Google Sign In
+                auth.signInWithPopup(googleProvider).catch((error) => {
+                    console.error("Login failed", error);
+                    alert("Login failed: " + error.message);
+                });
+            }
+        }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='detailModal') currentDetailId=null; }
         function toggleTheme() { const n = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', n); localStorage.setItem('theme',n); }
         function convertTo12Hour(t) { let [h, m] = t.split(':'); const a = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${m} ${a}`; }
