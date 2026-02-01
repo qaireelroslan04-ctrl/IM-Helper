@@ -477,10 +477,28 @@
         }
         async function submitPresentation() {
             const n = document.getElementById('inpPresName').value, e = document.getElementById('editPresenterId').value; if(!n) return alert("Select name");
-            let ps = allEvents.find(ev => ev.id === currentDetailId).presenters || [];
-            if(e) ps = ps.map(p => p.id === e ? {...p, name:n, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value} : p);
-            else ps.push({ id: Date.now().toString(), name:n, caseName: document.getElementById('inpPresCase').value, detail: document.getElementById('inpPresDetail').value });
-            await scheduleRef.doc(currentDetailId).update({ presenters: ps }); closeModal('presentFormModal');
+            
+            // 1. UI Feedback
+            const btn = document.querySelector('#presentFormModal .btn-primary');
+            const originalText = btn.innerText; btn.innerText = "Saving..."; btn.disabled = true;
+
+            try {
+                // 2. Force Session Check
+                if (!auth.currentUser) await auth.signInAnonymously();
+
+                let ps = allEvents.find(ev => ev.id === currentDetailId).presenters || [];
+                const c = document.getElementById('inpPresCase').value, d = document.getElementById('inpPresDetail').value;
+                
+                if(e) ps = ps.map(p => p.id === e ? {...p, name:n, caseName:c, detail:d} : p);
+                else ps.push({ id: Date.now().toString(), name:n, caseName:c, detail:d });
+                
+                await scheduleRef.doc(currentDetailId).update({ presenters: ps }); 
+                closeModal('presentFormModal');
+            } catch (err) {
+                alert("Error: " + err.message + "\n\n(Hint: Ensure 'Anonymous' auth is enabled in Firebase Console)");
+            } finally {
+                btn.innerText = originalText; btn.disabled = false;
+            }
         }
         async function deletePresentation() { if(!confirm("Remove?")) return; let ps = allEvents.find(e => e.id === currentDetailId).presenters || []; ps.splice(currentPresIndex, 1); await scheduleRef.doc(currentDetailId).update({ presenters: ps }); closeModal('viewPresenterModal'); }
 
