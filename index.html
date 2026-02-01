@@ -132,6 +132,17 @@
             aside.open { transform: translateX(0); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
             .backdrop.open { display: block; }
         }
+
+        .analytics-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        .analytics-header { display: flex; align-items: center; gap: 1.5rem; }
+        .chart-wrapper { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+        .pie-chart { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(var(--accent-color) 0% 0%, var(--bg-input) 0% 100%); display: flex; align-items: center; justify-content: center; }
+        .pie-inner { width: 80%; height: 80%; background: var(--bg-card); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; color: var(--text-main); }
+        .analytics-info { flex: 1; }
+        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; width: 100%; }
+        .stat-box { background: var(--bg-input); padding: 0.8rem; border-radius: 0.8rem; border: 1px solid var(--border-color); text-align: center; }
+        .stat-num { font-size: 1.2rem; font-weight: 800; color: var(--text-main); display: block; }
+        .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -278,12 +289,8 @@
                 document.getElementById('adminBtn').innerText = "Admin Login";
                 if(currentDetailId) document.getElementById('editBtn').classList.add('hidden');
                 
-                // If logged in but wrong email, force logout
-                if (user) {
-                    alert("Access Denied: " + user.email + " is not an admin.");
-                    auth.signOut();
-                }
             }
+            if (!user) auth.signInAnonymously().catch(console.error);
         });
 
         const lecturerContacts = { "Dr Affizal Samsudin": "60176631789", "Dr Asri B Said": "60138021143", "Dr Chai Chee Shee": "60198188265", "Dr Chan En Ze": "60105054955", "Dr Chow Han Bing": "60192712889", "Dr Diana Ng": "60198198265", "Dr Frederick De Rozario": "60168678252", "Dr Henry Gudum": "60198895047", "Dr Joshua Chung": "60168963966", "Dr Kuan Jew Win": "60198593011", "Dr Ling Hwei Sung": "60128939596", "Dr Loh Huai Heng": "60122010765", "Dr Sim Chun Yang": "60138273338", "Dr Sim Sing Yee": "60138338862", "Dr Yeoh Cheng Wooi": "60182628290" };
@@ -372,11 +379,37 @@
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer'); container.innerHTML = '';
             let filtered;
+            
             if (viewMode === 'week') filtered = allEvents.filter(e => e.week == currentWeek && e.type !== 'Reminder');
             else if (viewMode === 'lecturer') filtered = allEvents.filter(e => e.lecturer === currentLecturer);
-            else if (viewMode === 'member') filtered = allEvents.filter(e => e.presenters && e.presenters.some(p => p.name === currentMember));
+            else if (viewMode === 'member') {
+                const allPres = allEvents.filter(e => e.presenters && e.presenters.length > 0);
+                const totalGlobal = allPres.reduce((acc, e) => acc + e.presenters.length, 0);
+                filtered = allEvents.filter(e => e.presenters && e.presenters.some(p => p.name === currentMember));
+                
+                const types = { 'Seminar': 0, 'Case Discussion': 0, 'BST': 0, 'Other': 0 };
+                filtered.forEach(e => types[e.type === 'Seminar' || e.type === 'Case Discussion' || e.type === 'BST' ? e.type : 'Other']++);
+                const pct = totalGlobal > 0 ? (filtered.length / totalGlobal) * 100 : 0;
+                
+                container.innerHTML = `
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <div class="chart-wrapper"><div class="pie-chart" style="background: conic-gradient(var(--accent-color) 0% ${pct}%, var(--bg-input) ${pct}% 100%)"><div class="pie-inner">${Math.round(pct)}%</div></div></div>
+                            <div class="analytics-info"><h3 style="margin-bottom:0.2rem">${currentMember}</h3><div style="font-size:0.8rem; color:var(--text-muted)">Contribution</div><div style="font-size:0.8rem; font-weight:700">${filtered.length} / ${totalGlobal} Presentations</div></div>
+                        </div>
+                        <div class="stat-grid">
+                            ${Object.entries(types).map(([k, v]) => `<div class="stat-box"><span class="stat-num">${v}</span><span class="stat-label">${k}</span></div>`).join('')}
+                        </div>
+                    </div>`;
+            }
             else if (viewMode === 'reminder') filtered = allEvents.filter(e => e.type === 'Reminder');
-            if(filtered.length === 0) { container.innerHTML = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>'; if(viewMode === 'week') appendNextWeekButton(container); return; }
+            
+            if(filtered.length === 0) { 
+                const msg = '<div style="text-align:center; padding:4rem; color:var(--text-muted)">No sessions found.</div>';
+                if(viewMode === 'member') container.innerHTML += msg; else container.innerHTML = msg;
+                if(viewMode === 'week') appendNextWeekButton(container); return; 
+            }
+            
             const grouped = {}; filtered.forEach(e => { if(!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
             Object.keys(grouped).sort().forEach(date => {
                 const dayName = new Date(date).toLocaleDateString('en-US',{weekday:'long'});
